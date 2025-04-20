@@ -27,12 +27,13 @@ Each team member will work on features assigned to their group.
 ---
 
 ## 🧑‍💻 How to Get Started
+### 1. Clone the Repository
 
 ### What Does It Mean to Clone a Repo?
 
 Cloning means you're copying the entire codebase from GitHub to your local computer so that you can start working on it. This gives you your own local version of the project that you can edit, run, and push updates from.
 
-### 1. Clone the Repository
+
 
 ```bash
 git clone https://github.com/GSU-Software-Engineering-Spring-2025/techdigest.git
