@@ -1,146 +1,146 @@
-Here's a cleaned-up, professional version of your README file — all references to Lovable have been removed, and it's now focused on collaboration, local development, and deployment, ready for GitHub:
+# 🚀 TechDigest Team Onboarding & Contribution Guide
+
+Welcome to the **TechDigest GitHub Organization (GSU-Software-Engineering-Spring-2025)**! This guide will show you how to join the project, collaborate smoothly, and contribute effectively. Whether you're on the **Backend Team**, **AI Integration Team**, or the **Frontend Team**, this document outlines everything you need to know.
 
 ---
 
-# 📰 TechDigest – Technology News Web App
+## 🔗 Project Access
 
-TechDigest is a fully responsive web application that delivers curated technology news categorized by subfields like AI, ML, and Robotics. It features AI-powered article summarization, user authentication, filtering, and dynamic interaction tracking — built with a modern full-stack architecture.
+### 🌐 Frontend App (Live Preview)
 
----
+https://techdigest.netlify.app/
 
-## 🚀 Project Info
-
-This repository contains the **frontend** for TechDigest, built using:
-
--   [React](https://react.dev/)
--   [TypeScript](https://www.typescriptlang.org/)
--   [Vite](https://vitejs.dev/)
--   [Tailwind CSS](https://tailwindcss.com/)
--   [shadcn/ui](https://ui.shadcn.com/)
+_Only the frontend is currently live. We're connecting it to backend and AI services within the next 24 hours._
 
 ---
 
-## 📦 How to Set Up the Project Locally
+## 👥 Teams Overview
 
-Make sure you have **Node.js** and **npm** installed. You can use [nvm](https://github.com/nvm-sh/nvm#installing-and-updating) to manage Node versions.
+We are working in three primary teams:
 
-### 1. Clone the repository
+-   **Backend Team** – Handles API routes, authentication, and database logic
+-   **AI Integration Team** – Connects the app to OpenAI/HuggingFace for article summarization
+-   **Frontend Team** – Continues to fine-tune the user interface and user experience across the app
+
+Each team member will work on features assigned to their group.
+
+---
+
+## 🧑‍💻 How to Get Started
+
+### What Does It Mean to Clone a Repo?
+
+Cloning means you're copying the entire codebase from GitHub to your local computer so that you can start working on it. This gives you your own local version of the project that you can edit, run, and push updates from.
+
+### 1. Clone the Repository
 
 ```bash
-git clone <YOUR_REPOSITORY_URL>
+git clone https://github.com/GSU-Software-Engineering-Spring-2025/techdigest.git
+cd techdigest
 ```
 
-### 2. Navigate to the project directory
-
-```bash
-cd techdigest-frontend
-```
-
-### 3. Install dependencies
+### 2. Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 4. Start the development server
+### 3. Start the Development Server
 
 ```bash
 npm run dev
 ```
 
-The app will start at `http://localhost:5173` (or another available port). The terminal will tell you the exact address.
+---
+
+## 🔁 Contribution Workflow
+
+### ✅ Step-by-Step Process
+
+1. **Create Your Own Branch**
+
+    - Format: `backend-full-name`, `ai-full-name`, or `frontend-full-name`
+        - Examples: `backend-samuel-james`, `ai-anita-okafor`, `frontend-kenny-lee`
+
+    ```bash
+    git checkout -b backend-your-name
+    ```
+
+    > `git checkout -b` creates a new branch and switches to it.
+
+2. **Work & Commit Regularly**
+
+    ```bash
+    git add .
+    git commit -m "Add feature X"
+
+    # First time pushing your branch to GitHub:
+    git push -u origin your-branch-name
+
+    # After that, just use:
+    git push
+    ```
+
+    > The `-u` flag links your local branch with the remote one so that future pushes can be done with just `git push`.
+
+3. **Keep Your Branch Up to Date Before Pull Request**
+
+    ```bash
+    git checkout main
+    git pull origin main
+    git checkout your-branch
+    git merge main
+    ```
+
+    > This ensures your branch includes any recent changes from others, so you don't accidentally overwrite someone’s work.
+
+4. **Open a Pull Request (PR)**
+
+    - Go to GitHub > Compare & Pull Request
+    - Add a description of your changes
+    - Submit for review
+
+5. **Get Approval**
+
+    - Only uthorized reviewers will approve PRs
+
+6. **Merging to Main**
+    - Pull requests will be merged only after approval
+    - No one should push directly to `main` branch ❌
 
 ---
 
-## 🧑‍💻 How to Contribute
+## 🔐 GitHub Branch Protection
 
-This is a collaborative project! Here’s how you can contribute:
+We will enable a protection rule on the `main` branch:
 
-1. **Fork the repository**
-2. **Create a new branch**:  
-   `git checkout -b feature/your-feature-name`
-3. **Make your changes**
-4. **Commit and push**:  
-   `git commit -m "Add: your descriptive message"`  
-   `git push origin feature/your-feature-name`
-5. **Open a Pull Request** describing your changes
-
-### 🗂 Branch Naming Conventions
-
-| Branch Type | Prefix         |
-| ----------- | -------------- |
-| New Feature | `feature/`     |
-| Bug Fix     | `fix/`         |
-| Enhancement | `enhancement/` |
-| UI Updates  | `ui/`          |
+-   Direct pushes are **not allowed**
+-   Pull requests must be reviewed and approved by the authorized reviewers before merging
 
 ---
 
-## 🧠 Project Highlights
+## 📦 Best Practices
 
--   Category-based tech news layout
--   Sorting by title or date
--   AI-generated article summaries (API TODOs in place)
--   Like/view/dislike tracking
--   Authentication (login/signup) with mock state
--   Sidebar navigation
--   Fully responsive design
-
----
-
-## 🌐 Deployment
-
-You can deploy this project using any modern frontend hosting platform like:
-
--   [Vercel](https://vercel.com/)
--   [Netlify](https://netlify.com/)
--   [Render](https://render.com/)
-
-Simply connect your GitHub repository and set the **build command** to:
-
-```bash
-npm run build
-```
-
-And set the **output directory** to:
-
-```bash
-dist
-```
+-   Use clear, descriptive commit messages
+-   Always sync your branch with `main` before making a pull request
+-   Communicate if you are working on a shared file or feature
+-   Pull frequently to avoid conflicts:
+    ```bash
+    git pull origin main
+    ```
 
 ---
 
-## 📁 Folder Structure
+## ✉️ Haven’t Been Added / Invited to Github Yet?
 
-```
-/src
-├── components/     # Reusable UI components
-├── pages/          # Main pages (Home, Login, Article, etc.)
-├── layouts/        # Layout wrappers
-├── data/           # Dummy/mock data
-├── hooks/          # Custom React hooks
-├── context/        # Context API for global state
-└── utils/          # Utility functions
-```
+Send your GitHub email to the GroupMe to be added to the organization.
 
 ---
 
-## 🛠 Tech Stack Summary
+## 🧠 Final Notes
 
-| Category         | Tools / Frameworks                      |
-| ---------------- | --------------------------------------- |
-| Frontend         | React, TypeScript, Vite                 |
-| Styling          | Tailwind CSS, shadcn/ui                 |
-| State Management | React Context, Hooks (Zustand optional) |
-| Routing          | React Router                            |
+-   We are on a tight deadline – please work efficiently and collaboratively
+-   Ask questions early, especially if you're unsure about Git or your task
+-   We are building this together – let’s ship something great! 💪🏽
 
 ---
-
-## 📌 Notes
-
--   All backend/API interactions are marked with `// TODO:` comments.
--   This repo focuses only on the **frontend**. The backend, AI summarization service, and database integration are handled separately.
-
----
-
-Let me know if you’d like a `CONTRIBUTING.md`, issue templates, or GitHub Actions for linting/prettier!
