@@ -1,16 +1,17 @@
-
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { getArticlesByCategory } from "@/data/articles";
 import { getCategoryById } from "@/data/categories";
 import ArticleCard from "@/components/ArticleCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Article } from '@/data/articles';
 
 type SortOption = "az" | "za" | "newest" | "oldest";
 
 const CategoryPage = () => {
   const { categoryId } = useParams<{ categoryId: string }>();
   const [sortOption, setSortOption] = useState<SortOption>("newest");
+  const [articles, setArticles] = useState<Article[]>([]);
   
   const category = getCategoryById(categoryId || "");
   const categoryArticles = getArticlesByCategory(category?.name || "");
@@ -22,6 +23,12 @@ const CategoryPage = () => {
     if (category) {
       document.title = `${category.name} Articles - TechDigest`;
     }
+    
+    const fetchArticles = async () => {
+      // Your fetch logic here
+    };
+
+    fetchArticles();
     
     const articles = [...categoryArticles];
     
