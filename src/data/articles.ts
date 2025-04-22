@@ -20,7 +20,7 @@ export interface Article {
 }
 
 console.log(newsArticles);
-export const articles = newsArticles;
+export const articles = await newsArticles;
 
 // "id": article.get("uri"),
 // "title": article.get("title"),

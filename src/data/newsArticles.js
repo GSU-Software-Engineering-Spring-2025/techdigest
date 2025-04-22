@@ -23,4 +23,4 @@ export const fetchArticlesByCat = async (category) => {
 
 }
 
-export const articles = await fetchArticles().then((data) => console.log(data));
+export const articles = await fetchArticles();

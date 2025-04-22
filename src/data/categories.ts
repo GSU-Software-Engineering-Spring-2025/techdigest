@@ -51,7 +51,7 @@ export const categories: Category[] = [
   },
   {
     id: "vr-ar",
-    name: "vr",
+    name: "VR/AR",
     description: "Virtual and augmented reality technologies",
     imageUrl: "https://images.unsplash.com/photo-1592478411213-6153e4ebc07d",
     color: "bg-pink-500",
