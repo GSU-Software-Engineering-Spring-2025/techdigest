@@ -1,4 +1,3 @@
-
 import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { getArticleById } from "@/data/articles";
@@ -66,28 +65,28 @@ const ArticlePage = () => {
   };
   
   if (!article) {
-    return <div>Article not found</div>;
+    return <div className="text-foreground">Article not found</div>;
   }
   
   const formattedDate = format(new Date(article.date), "MMMM dd, yyyy");
   
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className="bg-card text-card-foreground shadow-md rounded-lg overflow-hidden">
         <div className="p-6 md:p-8">
-          <div className="mb-4 text-sm text-gray-500">
+          <div className="mb-4 text-sm text-muted-foreground">
             {article.category} • {formattedDate}
           </div>
           
-          <h1 className="text-3xl md:text-4xl font-bold mb-6">{article.title}</h1>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-6">{article.title}</h1>
           
           <div className="flex items-center mb-8">
             <Avatar className="h-10 w-10">
               <AvatarFallback>{article.author[0]}</AvatarFallback>
             </Avatar>
             <div className="ml-3">
-              <div className="font-medium">{article.author}</div>
-              <div className="text-sm text-gray-500">Author</div>
+              <div className="font-medium text-foreground">{article.author}</div>
+              <div className="text-sm text-muted-foreground">Author</div>
             </div>
           </div>
           
@@ -99,23 +98,23 @@ const ArticlePage = () => {
             />
           </div>
           
-          <div className="prose max-w-none mb-8">
+          <div className="prose max-w-none mb-8 text-foreground">
             <p className="mb-4 text-lg leading-relaxed">{article.preview}</p>
             {article.content.split('\n\n').map((paragraph, idx) => (
               <p key={idx} className="mb-4">{paragraph}</p>
             ))}
           </div>
           
-          <div className="flex flex-wrap items-center justify-between border-t border-b py-4 mb-8">
+          <div className="flex flex-wrap items-center justify-between border-t border-b border-border py-4 mb-8">
             <div className="flex items-center space-x-6 mb-4 md:mb-0">
               <Button variant="ghost" className="flex items-center" onClick={handleLike}>
-                <ThumbsUp className="h-5 w-5 mr-2" /> {likes}
+                <ThumbsUp className="h-5 w-5 mr-2 text-muted-foreground" /> {likes}
               </Button>
               <Button variant="ghost" className="flex items-center" onClick={handleDislike}>
-                <ThumbsDown className="h-5 w-5 mr-2" /> {dislikes}
+                <ThumbsDown className="h-5 w-5 mr-2 text-muted-foreground" /> {dislikes}
               </Button>
-              <div className="flex items-center text-gray-500">
-                <Eye className="h-5 w-5 mr-2" /> {views} Views
+              <div className="flex items-center text-muted-foreground">
+                <Eye className="h-5 w-5 mr-2 text-muted-foreground" /> {views} Views
               </div>
             </div>
             
@@ -123,16 +122,16 @@ const ArticlePage = () => {
           </div>
           
           {showSummary && (
-            <Card className="mb-8 border-l-4 border-tech-purple">
+            <Card className="mb-8 border-l-4 border-primary">
               <CardContent className="p-4">
-                <h3 className="font-bold mb-2">AI Summary</h3>
-                <p>This article discusses {article.title.toLowerCase()} and its implications for the technology industry. The key points include advancements in {article.category}, potential applications, and future developments in this field. The author highlights the significance of these technologies and how they might impact various industries in the coming years.</p>
+                <h3 className="font-bold text-foreground mb-2">AI Summary</h3>
+                <p className="text-foreground">This article discusses {article.title.toLowerCase()} and its implications for the technology industry. The key points include advancements in {article.category}, potential applications, and future developments in this field. The author highlights the significance of these technologies and how they might impact various industries in the coming years.</p>
               </CardContent>
             </Card>
           )}
           
-          <div className="border-t pt-8">
-            <h3 className="text-xl font-bold mb-4">Comments ({comments.length})</h3>
+          <div className="border-t border-border pt-8">
+            <h3 className="text-xl font-bold text-foreground mb-4">Comments ({comments.length})</h3>
             
             <form onSubmit={handleCommentSubmit} className="mb-6">
               <Textarea 
@@ -147,23 +146,23 @@ const ArticlePage = () => {
             {comments.length > 0 ? (
               <div className="space-y-4">
                 {comments.map((comment) => (
-                  <div key={comment.id} className="border-b pb-4">
+                  <div key={comment.id} className="border-b border-border pb-4">
                     <div className="flex items-center mb-2">
                       <Avatar className="h-8 w-8">
                         <AvatarFallback>{comment.author[0]}</AvatarFallback>
                       </Avatar>
                       <div className="ml-2">
-                        <div className="font-medium">{comment.author}</div>
-                        <div className="text-xs text-gray-500">{format(comment.date, "MMM dd, yyyy 'at' h:mm a")}</div>
+                        <div className="font-medium text-foreground">{comment.author}</div>
+                        <div className="text-xs text-muted-foreground">{format(comment.date, "MMM dd, yyyy 'at' h:mm a")}</div>
                       </div>
                     </div>
-                    <p>{comment.text}</p>
+                    <p className="text-foreground">{comment.text}</p>
                   </div>
                 ))}
               </div>
             ) : (
-              <div className="text-gray-500 flex items-center justify-center py-8">
-                <MessageSquare className="mr-2 h-5 w-5" />
+              <div className="text-muted-foreground flex items-center justify-center py-8">
+                <MessageSquare className="mr-2 h-5 w-5 text-muted-foreground" />
                 No comments yet. Be the first to comment!
               </div>
             )}

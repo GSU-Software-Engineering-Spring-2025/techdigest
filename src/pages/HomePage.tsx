@@ -1,4 +1,3 @@
-
 import { categories } from "@/data/categories";
 import { getMostViewedArticle, articles } from "@/data/articles";
 import FeaturedArticle from "@/components/FeaturedArticle";
@@ -21,16 +20,16 @@ const HomePage = () => {
     <div>
       <section className="mb-12">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-tech-dark-gray">Most Popular Article</h2>
-          <div className="h-1 w-20 bg-tech-purple mt-2"></div>
+          <h2 className="text-2xl font-bold text-foreground">Most Popular Article</h2>
+          <div className="h-1 w-20 bg-primary mt-2"></div>
         </div>
         <FeaturedArticle article={featuredArticle} />
       </section>
       
       <section className="mb-12">
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-tech-dark-gray">Categories</h2>
-          <div className="h-1 w-20 bg-tech-purple mt-2"></div>
+          <h2 className="text-2xl font-bold text-foreground">Categories</h2>
+          <div className="h-1 w-20 bg-primary mt-2"></div>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {categories.map((category) => (
@@ -41,8 +40,8 @@ const HomePage = () => {
       
       <section>
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-tech-dark-gray">Recent Articles</h2>
-          <div className="h-1 w-20 bg-tech-purple mt-2"></div>
+          <h2 className="text-2xl font-bold text-foreground">Recent Articles</h2>
+          <div className="h-1 w-20 bg-primary mt-2"></div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {recentArticles.map((article) => (
