@@ -1,10 +1,8 @@
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
 
-dotenv.config();
 
-// Use process.env for Node.js environment
-const API_KEY = process.env.VITE_OPENAI_API_KEY;
+const API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
 if (!API_KEY) {
   throw new Error('OpenAI API key is not configured');
 }
@@ -16,7 +14,6 @@ const openai = new OpenAI({
 
 export const summarizeText = async (text: string): Promise<string> => {
   try {
-    // Validate input
     if (!text || text.length < 10) {
       throw new Error('Text is too short to summarize');
     }
@@ -36,7 +33,7 @@ export const summarizeText = async (text: string): Promise<string> => {
         }
       ],
       temperature: 0.5,
-      max_tokens: 150, // Increased for better summaries
+      max_tokens: 150,
       presence_penalty: 0.1,
       frequency_penalty: 0.1
     });

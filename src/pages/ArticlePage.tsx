@@ -23,7 +23,6 @@ const ArticlePage = () => {
   
   useEffect(() => {
     // TODO: Fetch article data from API
-    // TODO: Track article view
     if (article) {
       document.title = `${article.title} - TechDigest`;
       // Increment views for demo purposes
