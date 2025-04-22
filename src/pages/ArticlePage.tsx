@@ -104,6 +104,21 @@ const ArticlePage = () => {
             />
           </div>
           
+          {/* AI Summary appears at the top before the content */}
+          {showSummary && (
+            <Card className="mb-8 border-l-4 border-tech-purple">
+              <CardContent className="p-4">
+                <h3 className="font-bold mb-2">AI Summary</h3>
+                <p>
+                  This article discusses {article.title.toLowerCase()} and its implications for the
+                  technology industry. The key points include advancements in {article.category}, potential
+                  applications, and future developments. The author highlights the significance of these
+                  technologies and how they might impact various industries in the coming years.
+                </p>
+              </CardContent>
+            </Card>
+          )}
+          
           <div className="prose max-w-none mb-8">
             <p className="mb-4 text-lg leading-relaxed">{article.preview}</p>
             {article.content.split('\n\n').map((paragraph, idx) => (
@@ -140,17 +155,6 @@ const ArticlePage = () => {
               Summarize with AI
             </Button>
           </div>
-          
-          {showSummary && (
-            <Card className="mb-8 border-l-4 border-tech-purple">
-              <CardContent className="p-4">
-                <h3 className="font-bold mb-2">AI Summary</h3>
-                <p>
-                  This article discusses {article.title.toLowerCase()} and its implications for the technology industry. The key points include advancements in {article.category}, potential applications, and future developments in this field. The author highlights the significance of these technologies and how they might impact various industries in the coming years.
-                </p>
-              </CardContent>
-            </Card>
-          )}
           
           <div className="border-t pt-8">
             <h3 className="text-xl font-bold mb-4">Comments ({comments.length})</h3>
