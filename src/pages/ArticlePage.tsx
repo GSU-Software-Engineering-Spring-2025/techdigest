@@ -8,6 +8,7 @@ import { Eye, ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/sonner";
+import { summarizeText } from "@/services/openai"; 
 
 const ArticlePage = () => {
   const { articleId } = useParams<{ articleId: string }>();
@@ -41,6 +42,14 @@ const ArticlePage = () => {
   
   const handleShowSummary = () => {
     // TODO: Call AI summary API
+    console.log('Summarizing article with AI...');
+    if (article) {
+      // perform the ai summary using the openai api service
+      // console.log(article.content);
+      const data = article.content;
+      const summary = summarizeText(data);
+      console.log(summary);
+    }
     setShowSummary(true);
     toast.success("Article summarized with AI!");
   };
