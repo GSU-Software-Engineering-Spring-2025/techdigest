@@ -9,7 +9,7 @@ app = FastAPI()
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8081"],  # Your Vite dev server
+    allow_origins=["http://localhost:8084"],  # Your Vite dev server
     allow_methods=["GET"],
     allow_headers=["*"]
 )
@@ -48,7 +48,8 @@ async def getArticles():
                 "authors": article.get("author", "Unknown Author"),
                 "title": article.get("title", ""),
                 "summary": article.get("description", "No description available"),
-                "id": article.get("url", ""),
+                # Using a combination of URL and date to create a unique identifier
+                "id": f"{article.get('url', '')}_{article.get('publishedAt', '').replace(':', '-')}",                
                 "url": article.get("url", ""),
                 "image": article.get("urlToImage", ""),
                 "date": article.get("publishedAt", ""),
