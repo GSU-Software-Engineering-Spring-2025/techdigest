@@ -40,18 +40,24 @@ const ArticlePage = () => {
     // TODO: Send dislike to API
   };
   
-  const handleShowSummary = () => {
-    // TODO: Call AI summary API
-    console.log('Summarizing article with AI...');
-    if (article) {
-      // perform the ai summary using the openai api service
-      // console.log(article.content);
-      const data = article.content;
-      const summary = summarizeText(data);
-      console.log(summary);
+  const handleShowSummary = async () => {
+    try {
+      console.log('Summarizing article with AI...');
+      if (article) {
+        const data = article.content;
+        const summary = await summarizeText(data);
+        console.log(summary);
+      }
+      setShowSummary(true);
+      toast.success("Article summarized with AI!");
+    } catch (error: any) {
+      console.error(error);
+      if (error.response?.status === 429) {
+        toast.error("Too many requests. Please try again later.");
+      } else {
+        toast.error("Failed to summarize article.");
+      }
     }
-    setShowSummary(true);
-    toast.success("Article summarized with AI!");
   };
   
   const handleCommentSubmit = (e: React.FormEvent) => {
