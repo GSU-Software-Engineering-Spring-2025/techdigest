@@ -145,3 +145,11 @@ Send your GitHub email to the GroupMe to be added to the organization.
 -   We are building this together – let’s ship something great! 💪🏽
 
 ---
+
+## OpenAI API Connection
+
+This project now integrates with the OpenAI API to provide article summarization. When an article is loaded, our app can send its content to OpenAI’s summarization service (using the gpt-3.5-turbo model) to generate a concise summary in just a few sentences.
+
+The connection to OpenAI is secured using an API key that is stored in a local environment file. This ensures that sensitive credentials remain private while allowing the application to communicate with OpenAI’s services.
+
+For local development, simply add your OpenAI API key to your environment as outlined in the project setup instructions.
