@@ -12,6 +12,10 @@ interface AuthUser {
   id: string;
   name: string;
   email: string;
+  // Add additional fields from your profile table if needed
+  // For example:
+  // avatar_url?: string;
+  // bio?: string;
 }
 
 interface AuthContextType {
@@ -35,31 +39,81 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<AuthUser | null>(null);
 
+  // Function to fetch user profile from the database
+  const fetchUserProfile = async (
+    userId: string,
+    email: string,
+    name: string
+  ) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (error) {
+        console.error("Error fetching user profile:", error);
+        // If there's an error, we'll fall back to basic auth info
+        return {
+          id: userId,
+          email,
+          name,
+        };
+      }
+
+      if (data) {
+        // Return data from the profiles table, with fallbacks to auth data if needed
+        return {
+          id: userId,
+          email: email,
+          name: data.full_name || name,
+          // Add any additional fields you want to access from the profiles table
+          // avatar_url: data.avatar_url,
+          // bio: data.bio,
+        };
+      }
+
+      return {
+        id: userId,
+        email,
+        name,
+      };
+    } catch (error) {
+      console.error("Failed to fetch user profile:", error);
+      return {
+        id: userId,
+        email,
+        name,
+      };
+    }
+  };
+
+  // Set user from session data and profile
+  const setUserFromSession = async (session: any) => {
+    if (session?.user) {
+      const { id, email, user_metadata } = session.user;
+      const name = user_metadata.name || "";
+
+      // Fetch additional user data from the database
+      const userData = await fetchUserProfile(id, email!, name);
+      setUser(userData);
+    } else {
+      setUser(null);
+    }
+  };
+
   useEffect(() => {
     // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email!,
-          name: session.user.user_metadata.name || "",
-        });
-      }
+      setUserFromSession(session);
     });
 
     // Listen for changes on auth state
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        setUser({
-          id: session.user.id,
-          email: session.user.email!,
-          name: session.user.user_metadata.name || "",
-        });
-      } else {
-        setUser(null);
-      }
+      setUserFromSession(session);
     });
 
     return () => subscription.unsubscribe();
@@ -78,6 +132,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (data.user) {
+        // User state will be set by the auth state change listener
         toast.success("Logged in successfully!");
         return true;
       }
@@ -111,6 +166,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         toast.success(
           "Account created successfully! Please check your email for verification."
         );
+
+        // Create a profile record in the database
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .insert({
@@ -120,7 +177,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           });
 
         if (profileError) {
-          toast.error(error.message);
+          toast.error("Profile creation failed: " + profileError.message);
           return false;
         }
 
