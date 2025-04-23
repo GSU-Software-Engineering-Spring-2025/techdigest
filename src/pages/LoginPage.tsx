@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -151,10 +150,6 @@ const LoginPage = () => {
           >
             {loading ? "Signing in..." : "Sign in"}
           </Button>
-          
-          <div className="text-center text-sm text-gray-500">
-            <p>Demo credentials: user@example.com / password</p>
-          </div>
         </form>
       </div>
     </div>
