@@ -14,6 +14,8 @@ import SignupPage from "@/pages/SignupPage";
 import CategoriesPage from "@/pages/CategoriesPage";
 import ProfilePage from "@/pages/ProfilePage";
 import NotFoundPage from "@/pages/NotFoundPage";
+import ConfirmEmailPage from "./pages/confirmEmailPage";
+import ConfirmNewEmailPage from "./pages/confirmNewEmailPage";
 
 const queryClient = new QueryClient();
 

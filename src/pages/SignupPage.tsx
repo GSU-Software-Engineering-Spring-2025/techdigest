@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -9,9 +8,8 @@ import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
 const SignupPage = () => {
-  const navigate = useNavigate();
   const { signup } = useAuth();
-  
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -22,23 +20,23 @@ const SignupPage = () => {
     name: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
   });
-  
+
   const validateForm = () => {
     let isValid = true;
     const newErrors = {
       name: "",
       email: "",
       password: "",
-      confirmPassword: ""
+      confirmPassword: "",
     };
-    
+
     if (!name) {
       newErrors.name = "Name is required";
       isValid = false;
     }
-    
+
     if (!email) {
       newErrors.email = "Email is required";
       isValid = false;
@@ -46,7 +44,7 @@ const SignupPage = () => {
       newErrors.email = "Please enter a valid email";
       isValid = false;
     }
-    
+
     if (!password) {
       newErrors.password = "Password is required";
       isValid = false;
@@ -54,31 +52,29 @@ const SignupPage = () => {
       newErrors.password = "Password must be at least 6 characters";
       isValid = false;
     }
-    
+
     if (password !== confirmPassword) {
       newErrors.confirmPassword = "Passwords do not match";
       isValid = false;
     }
-    
+
     setErrors(newErrors);
     return isValid;
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
-      const success = await signup(name, email, password);
-      
-      if (success) {
-        navigate("/");
-      }
+      const { data: success, error } = await signup(name, email, password);
+      if (error) throw error;
+      navigate("/login");
     } catch (error) {
       console.error("Signup error:", error);
       toast.error("An unexpected error occurred. Please try again.");
@@ -86,7 +82,7 @@ const SignupPage = () => {
       setLoading(false);
     }
   };
-  
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-tech-light-gray py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
@@ -101,7 +97,7 @@ const SignupPage = () => {
             Join TechDigest for the latest in tech news and insights
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
@@ -121,9 +117,11 @@ const SignupPage = () => {
                   placeholder="John Doe"
                 />
               </div>
-              {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
+              {errors.name && (
+                <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+              )}
             </div>
-            
+
             <div>
               <Label htmlFor="email">Email address</Label>
               <div className="relative">
@@ -141,9 +139,11 @@ const SignupPage = () => {
                   placeholder="you@example.com"
                 />
               </div>
-              {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+              )}
             </div>
-            
+
             <div>
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -172,9 +172,11 @@ const SignupPage = () => {
                   )}
                 </button>
               </div>
-              {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+              )}
             </div>
-            
+
             <div>
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <div className="relative">
@@ -186,30 +188,33 @@ const SignupPage = () => {
                   name="confirmPassword"
                   type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
-                  className={`pl-10 ${errors.confirmPassword ? "border-red-500" : ""}`}
+                  className={`pl-10 ${
+                    errors.confirmPassword ? "border-red-500" : ""
+                  }`}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                 />
               </div>
               {errors.confirmPassword && (
-                <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
+                <p className="mt-1 text-sm text-red-500">
+                  {errors.confirmPassword}
+                </p>
               )}
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="text-sm">
-              <Link to="/login" className="font-medium text-tech-purple hover:text-tech-light-purple">
+              <Link
+                to="/login"
+                className="font-medium text-tech-purple hover:text-tech-light-purple"
+              >
                 Already have an account? Sign in
               </Link>
             </div>
           </div>
-          
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
+
+          <Button type="submit" className="px-4 py-2 w-full" disabled={loading}>
             {loading ? "Creating account..." : "Create account"}
           </Button>
         </form>
