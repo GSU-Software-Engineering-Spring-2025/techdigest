@@ -1,4 +1,4 @@
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useActionData } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { getArticleById, getArticlesByCategory } from "@/data/articles";
 import { Button } from "@/components/ui/button";
@@ -15,10 +15,11 @@ const ArticlePage = () => {
   const { articleId } = useParams<{ articleId: string }>();
   const location = useLocation();
 
-  // Try to get article from location state (passed from CategoryPage)
   const passedArticle = location.state?.articleData;
 
   const [article, setArticle] = useState(passedArticle);
+  const [hasLiked, setHasLiked] = useState(false);
+  const [hasDisliked, setHasDisliked] = useState(false);
   const [likes, setLikes] = useState(0);
   const [dislikes, setDislikes] = useState(0);
   const [views, setViews] = useState(0);
@@ -94,20 +95,43 @@ const ArticlePage = () => {
       document.title = `${article.title} - TechDigest`;
       setViews((prev) => prev + 1);
       updateArticle("views", views + 1, articleId);
-      setViews(article.views + 1); // Increment views for demo purposes
     }
   }, [article]);
 
   const handleLike = () => {
+    if (hasLiked) {
+      toast.warning("You've already liked this article!");
+      return;
+    }
+
+    if (hasDisliked) {
+      setDislikes((prev) => prev - 1);
+      setHasDisliked(false);
+      updateArticle("dislikes", dislikes - 1, articleId);
+    }
+
     setLikes((prev) => prev + 1);
+    setHasLiked(true);
     updateArticle("likes", likes + 1, articleId);
     toast.success("Article liked!");
   };
 
   const handleDislike = () => {
+    if (hasDisliked) {
+      toast.warning("You've already disliked this article!");
+      return;
+    }
+
+    if (hasLiked) {
+      setLikes((prev) => prev - 1);
+      setHasLiked(false);
+      updateArticle("likes", likes - 1, articleId);
+    }
+
     setDislikes((prev) => prev + 1);
-    toast.error("Article disliked!");
+    setHasDisliked(true);
     updateArticle("dislikes", dislikes + 1, articleId);
+    toast.error("Article disliked!");
   };
 
   const handleShowSummary = async () => {
