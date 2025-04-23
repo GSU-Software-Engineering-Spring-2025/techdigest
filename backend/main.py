@@ -1,18 +1,27 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from eventregistry import EventRegistry, QueryArticlesIter
 import logging
 from datetime import datetime, timedelta
+import os
 
 app = FastAPI()
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:8081", "http://localhost:8080"],  # Your Vite dev server
+    allow_origins=["*"], 
     allow_methods=["GET"],
-    allow_headers=["*"]
+    allow_headers=["*"],
+    allow_credentials=True
 )
+
+@app.middleware("http")
+async def add_cors_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET"
+    response.headers["Access-Control-Allow-Headers"] = "*"
+    return response
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -23,6 +32,10 @@ er = EventRegistry(apiKey="812fa6b8-257c-4b3c-a6b4-55f412e1050a")
 
 # Define date range - last 2 years (730 days)
 forceMaxDataTimeWindow = "730"
+
+@app.get("/")
+def read_root():
+    return {"Hello": "World"}
 
 @app.get("/api/articles")
 async def getArticles():
@@ -303,6 +316,8 @@ async def getTrendingTech():
         logger.error(f"Error retrieving trending articles: {str(e)}")
         return []
 
+port = int(os.environ.get("PORT", 8000))
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
