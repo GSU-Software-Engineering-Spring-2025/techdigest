@@ -91,8 +91,6 @@ const ProfilePage = () => {
         });
 
         if (error) throw error;
-
-        navigate("/confirm-new-email");
       }
     } catch (error) {
       toast.error("Error updating profile: " + error);
