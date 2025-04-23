@@ -91,6 +91,7 @@ const ProfilePage = () => {
         });
 
         if (error) throw error;
+        toast.success("Email updated successfully!");
       }
     } catch (error) {
       toast.error("Error updating profile: " + error);
