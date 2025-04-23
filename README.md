@@ -6,9 +6,9 @@ Welcome to the **TechDigest GitHub Organization (GSU-Software-Engineering-Spring
 
 ## 🔗 Project Access
 
-### 🌐 Frontend App (Live Preview)
+### 🌐 Live Demo Link
 
-https://techdigest.netlify.app/
+https://techdaigest.netlify.app/
 
 _Only the frontend is currently live. We're connecting it to backend and AI services within the next 24 hours._
 
