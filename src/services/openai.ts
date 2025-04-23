@@ -26,7 +26,7 @@ export const summarizeText = async (text: string): Promise<string> => {
           {
             role: "system",
             content:
-              "You are a concise summarizer. Summarize the following article in 2-3 clear, informative sentences:",
+              "You are a concise summarizer. Summarize the following article in 4-5 clear, informative sentences:",
           },
           {
             role: "user",
