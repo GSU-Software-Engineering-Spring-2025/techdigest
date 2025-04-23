@@ -3,7 +3,6 @@ import supabase from '../lib/supabase';
 
 const API_URL = 'http://localhost:8000';
 
-
 async function upsertToArticleTable(articles) {
     try {
         const upsertPromises = articles.map(async (article) => {
@@ -55,11 +54,13 @@ export const fetchArticlesByCat = async (category) => {
 
 let cachedArticles = [];
 
+// The issue is here - incorrect export syntax
 export const initializeArticles = async () => {
-    cachedArticles = await fetchArticles();
+    if (cachedArticles.length === 0) {
+        cachedArticles = await fetchArticles();
+    }
     return cachedArticles;
 };
 
-export const articles = await initializeArticles();
-
-
+// This is the articles export that's being awaited in articles.js
+export const articles = fetchArticles();

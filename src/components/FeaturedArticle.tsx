@@ -50,7 +50,7 @@ const FeaturedArticle: React.FC<FeaturedArticleProps> = ({ article }) => {
           <div className="flex justify-between items-center">
             <div className="font-medium">{article.authors}</div>
             <Link to={`/article/${article.id}`}>
-              <Button variant="outline" className="flex items-center">
+              <Button variant="outline" className="px-4 py-2 flex items-center">
                 Read More <ArrowRight className="h-4 w-4 ml-2" />
               </Button>
             </Link>

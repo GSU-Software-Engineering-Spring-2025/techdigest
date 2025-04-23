@@ -10,17 +10,17 @@ import { toast } from "@/components/ui/sonner";
 const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({ email: "", password: "" });
-  
+
   const validateForm = () => {
     let isValid = true;
     const newErrors = { email: "", password: "" };
-    
+
     if (!email) {
       newErrors.email = "Email is required";
       isValid = false;
@@ -28,28 +28,28 @@ const LoginPage = () => {
       newErrors.email = "Please enter a valid email";
       isValid = false;
     }
-    
+
     if (!password) {
       newErrors.password = "Password is required";
       isValid = false;
     }
-    
+
     setErrors(newErrors);
     return isValid;
   };
-  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
-    
+
     setLoading(true);
-    
+
     try {
       const success = await login(email, password);
-      
+
       if (success) {
         navigate("/");
       }
@@ -60,7 +60,7 @@ const LoginPage = () => {
       setLoading(false);
     }
   };
-  
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-tech-light-gray py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-lg shadow-md">
@@ -75,7 +75,7 @@ const LoginPage = () => {
             Stay updated with the latest tech news
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
@@ -95,9 +95,11 @@ const LoginPage = () => {
                   placeholder="you@example.com"
                 />
               </div>
-              {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+              )}
             </div>
-            
+
             <div>
               <Label htmlFor="password">Password</Label>
               <div className="relative">
@@ -126,28 +128,32 @@ const LoginPage = () => {
                   )}
                 </button>
               </div>
-              {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+              )}
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <div className="text-sm">
-              <Link to="/signup" className="font-medium text-tech-purple hover:text-tech-light-purple">
+              <Link
+                to="/signup"
+                className="font-medium text-tech-purple hover:text-tech-light-purple"
+              >
                 Don't have an account? Sign up
               </Link>
             </div>
             <div className="text-sm">
-              <a href="#" className="font-medium text-tech-purple hover:text-tech-light-purple">
+              <a
+                href="#"
+                className="font-medium text-tech-purple hover:text-tech-light-purple"
+              >
                 Forgot your password?
               </a>
             </div>
           </div>
-          
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
+
+          <Button type="submit" className="px-4 py-2 w-full" disabled={loading}>
             {loading ? "Signing in..." : "Sign in"}
           </Button>
         </form>

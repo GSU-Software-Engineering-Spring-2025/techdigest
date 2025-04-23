@@ -1,6 +1,10 @@
-import { useParams, useLocation, useActionData } from "react-router-dom";
-import { useState, useEffect } from "react";
-import { getArticleById, getArticlesByCategory } from "@/data/articles";
+import { useParams, useLocation } from "react-router-dom";
+import { useState, useEffect, useCallback } from "react";
+import {
+  getArticleById,
+  getArticlesByCategory,
+  updateArticle,
+} from "@/data/articles";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -8,7 +12,6 @@ import { Eye, ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/sonner";
-import { updateArticle } from "@/data/articles";
 import { summarizeText } from "@/services/openai";
 
 const ArticlePage = () => {
@@ -23,12 +26,9 @@ const ArticlePage = () => {
   const [likes, setLikes] = useState(0);
   const [dislikes, setDislikes] = useState(0);
   const [views, setViews] = useState(0);
+  const [viewCounted, setViewCounted] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [isSummarizing, setIsSummarizing] = useState(false);
-  const [comment, setComment] = useState("");
-  const [comments, setComments] = useState<
-    Array<{ id: number; author: string; text: string; date: Date }>
-  >([]);
   const [isLoading, setIsLoading] = useState(!passedArticle);
   const [summary, setSummary] = useState("");
 
@@ -42,17 +42,12 @@ const ArticlePage = () => {
 
   useEffect(() => {
     const fetchArticle = async () => {
-      // If article wasn't passed via state, try to fetch it
       if (!passedArticle && articleId) {
         setIsLoading(true);
 
-        // First try the standard method
         let foundArticle = await getArticleById(articleId);
 
-        // If not found, we need to find which category it belongs to and fetch it
         if (!foundArticle) {
-          // This approach requires checking each category
-          // You might want to add a new API endpoint that gets article by ID directly
           const categories = [
             "AI",
             "ML",
@@ -80,7 +75,6 @@ const ArticlePage = () => {
 
         setIsLoading(false);
       } else if (passedArticle) {
-        // Initialize with passed article data
         setLikes(passedArticle.likes || 0);
         setDislikes(passedArticle.dislikes || 0);
         setViews(passedArticle.views || 0);
@@ -88,51 +82,123 @@ const ArticlePage = () => {
     };
 
     fetchArticle();
+    if (articleId) {
+      const likedArticles = JSON.parse(
+        localStorage.getItem("likedArticles") || "{}"
+      );
+      const dislikedArticles = JSON.parse(
+        localStorage.getItem("dislikedArticles") || "{}"
+      );
+
+      setHasLiked(!!likedArticles[articleId]);
+      setHasDisliked(!!dislikedArticles[articleId]);
+    }
   }, [articleId, passedArticle]);
 
   useEffect(() => {
+    const updateViewCount = async () => {
+      if (article && articleId && !viewCounted) {
+        const viewedArticles = JSON.parse(
+          sessionStorage.getItem("viewedArticles") || "{}"
+        );
+
+        if (!viewedArticles[articleId]) {
+          const newViewCount = views + 1;
+          setViews(newViewCount);
+          setViewCounted(true);
+
+          viewedArticles[articleId] = true;
+          sessionStorage.setItem(
+            "viewedArticles",
+            JSON.stringify(viewedArticles)
+          );
+          await updateArticle("views", newViewCount, articleId);
+        }
+      }
+    };
+
     if (article) {
       document.title = `${article.title} - TechDigest`;
-      setViews((prev) => prev + 1);
-      updateArticle("views", views + 1, articleId);
+      updateViewCount();
     }
-  }, [article]);
+  }, [article, articleId, viewCounted, views]);
 
-  const handleLike = () => {
+  const handleLike = useCallback(async () => {
+    if (!articleId) return;
+
     if (hasLiked) {
       toast.warning("You've already liked this article!");
       return;
     }
 
     if (hasDisliked) {
-      setDislikes((prev) => prev - 1);
+      const newDislikeCount = Math.max(0, dislikes - 1);
+      setDislikes(newDislikeCount);
       setHasDisliked(false);
-      updateArticle("dislikes", dislikes - 1, articleId);
+
+      await updateArticle("dislikes", newDislikeCount, articleId);
+
+      const dislikedArticles = JSON.parse(
+        localStorage.getItem("dislikedArticles") || "{}"
+      );
+      delete dislikedArticles[articleId];
+      localStorage.setItem(
+        "dislikedArticles",
+        JSON.stringify(dislikedArticles)
+      );
     }
 
-    setLikes((prev) => prev + 1);
+    const newLikeCount = likes + 1;
+    setLikes(newLikeCount);
     setHasLiked(true);
-    updateArticle("likes", likes + 1, articleId);
-    toast.success("Article liked!");
-  };
 
-  const handleDislike = () => {
+    await updateArticle("likes", newLikeCount, articleId);
+
+    const likedArticles = JSON.parse(
+      localStorage.getItem("likedArticles") || "{}"
+    );
+    likedArticles[articleId] = true;
+    localStorage.setItem("likedArticles", JSON.stringify(likedArticles));
+
+    toast.success("Article liked!");
+  }, [articleId, hasLiked, hasDisliked, likes, dislikes]);
+
+  const handleDislike = useCallback(async () => {
+    if (!articleId) return;
+
     if (hasDisliked) {
       toast.warning("You've already disliked this article!");
       return;
     }
 
     if (hasLiked) {
-      setLikes((prev) => prev - 1);
+      const newLikeCount = Math.max(0, likes - 1);
+      setLikes(newLikeCount);
       setHasLiked(false);
-      updateArticle("likes", likes - 1, articleId);
+
+      await updateArticle("likes", newLikeCount, articleId);
+
+      const likedArticles = JSON.parse(
+        localStorage.getItem("likedArticles") || "{}"
+      );
+      delete likedArticles[articleId];
+      localStorage.setItem("likedArticles", JSON.stringify(likedArticles));
     }
 
-    setDislikes((prev) => prev + 1);
+    const newDislikeCount = dislikes + 1;
+    setDislikes(newDislikeCount);
     setHasDisliked(true);
-    updateArticle("dislikes", dislikes + 1, articleId);
+
+    await updateArticle("dislikes", newDislikeCount, articleId);
+
+    const dislikedArticles = JSON.parse(
+      localStorage.getItem("dislikedArticles") || "{}"
+    );
+    dislikedArticles[articleId] = true;
+    localStorage.setItem("dislikedArticles", JSON.stringify(dislikedArticles));
+
     toast.error("Article disliked!");
-  };
+  }, [articleId, hasLiked, hasDisliked, likes, dislikes]);
 
   const handleShowSummary = async () => {
     try {
@@ -159,22 +225,6 @@ const ArticlePage = () => {
     }
   };
 
-  const handleCommentSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (comment.trim()) {
-      const newComment = {
-        id: Date.now(),
-        author: "Anonymous User",
-        text: comment,
-        date: new Date(),
-      };
-      setComments((prev) => [newComment, ...prev]);
-      setComment("");
-      toast.success("Comment posted!");
-      // TODO: Send comment to API
-    }
-  };
-
   if (isLoading) {
     return <div className="flex justify-center p-8">Loading article...</div>;
   }
@@ -193,14 +243,42 @@ const ArticlePage = () => {
             {article.category} • {formattedDate}
           </div>
 
-          {/* Header with title and top right summarize button */}
           <div className="flex items-center justify-between mb-6">
             <h1 className="text-3xl md:text-4xl font-bold">{article.title}</h1>
             <Button
               onClick={handleShowSummary}
               className="px-4 py-2 rounded-md bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:opacity-90 transition"
+              disabled={isSummarizing}
             >
-              Summarize with AI
+              {isSummarizing ? (
+                <span className="flex items-center">
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Generating...
+                </span>
+              ) : showSummary ? (
+                "Hide Summary"
+              ) : (
+                "Summarize with AI"
+              )}
             </Button>
           </div>
 
@@ -225,7 +303,6 @@ const ArticlePage = () => {
             />
           </div>
 
-          {/* AI Summary appears at the top before the content */}
           {showSummary && (
             <Card className="mb-8 border-l-4 border-blue-500 bg-blue-50/50">
               <CardContent className="p-6">
@@ -276,22 +353,33 @@ const ArticlePage = () => {
             ))}
           </div>
 
-          {/* Bottom controls including summarize button */}
           <div className="flex flex-wrap items-center justify-between border-t border-b py-4 mb-8">
             <div className="flex items-center space-x-6 mb-4 md:mb-0">
               <Button
                 variant="ghost"
-                className="flex items-center px-2 py-1 rounded-md hover:bg-blue-50 transition"
+                className={`flex items-center px-2 py-1 rounded-md ${
+                  hasLiked ? "bg-blue-100 text-blue-700" : "hover:bg-blue-50"
+                } transition`}
                 onClick={handleLike}
               >
-                <ThumbsUp className="h-5 w-5 mr-2" /> {likes}
+                <ThumbsUp
+                  className={`h-5 w-5 mr-2 ${hasLiked ? "fill-current" : ""}`}
+                />{" "}
+                {likes}
               </Button>
               <Button
                 variant="ghost"
-                className="flex items-center px-2 py-1 rounded-md hover:bg-red-50 transition"
+                className={`flex items-center px-2 py-1 rounded-md ${
+                  hasDisliked ? "bg-red-100 text-red-700" : "hover:bg-red-50"
+                } transition`}
                 onClick={handleDislike}
               >
-                <ThumbsDown className="h-5 w-5 mr-2" /> {dislikes}
+                <ThumbsDown
+                  className={`h-5 w-5 mr-2 ${
+                    hasDisliked ? "fill-current" : ""
+                  }`}
+                />{" "}
+                {dislikes}
               </Button>
               <div className="flex items-center text-gray-500">
                 <Eye className="h-5 w-5 mr-2" /> {views} Views
@@ -333,53 +421,6 @@ const ArticlePage = () => {
                 "Summarize with AI"
               )}
             </Button>
-          </div>
-
-          <div className="border-t pt-8">
-            <h3 className="text-xl font-bold mb-4">
-              Comments ({comments.length})
-            </h3>
-
-            <form onSubmit={handleCommentSubmit} className="mb-6">
-              <Textarea
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder="Add a comment..."
-                className="mb-3"
-              />
-              <Button
-                type="submit"
-                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
-              >
-                Post Comment
-              </Button>
-            </form>
-
-            {comments.length > 0 ? (
-              <div className="space-y-4">
-                {comments.map((comment) => (
-                  <div key={comment.id} className="border-b pb-4">
-                    <div className="flex items-center mb-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>{comment.author[0]}</AvatarFallback>
-                      </Avatar>
-                      <div className="ml-2">
-                        <div className="font-medium">{comment.author}</div>
-                        <div className="text-xs text-gray-500">
-                          {format(comment.date, "MMM dd, yyyy 'at' h:mm a")}
-                        </div>
-                      </div>
-                    </div>
-                    <p>{comment.text}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-gray-500 flex items-center justify-center py-8">
-                <MessageSquare className="mr-2 h-5 w-5" />
-                No comments yet. Be the first to comment!
-              </div>
-            )}
           </div>
         </div>
       </div>

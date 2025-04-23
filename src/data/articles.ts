@@ -1,8 +1,5 @@
 // import { Article } from "@/data/articles";
-import {
-  articles as newsArticles,
-  fetchArticlesByCat,
-} from "@/data/newsArticles.js";
+import { fetchArticlesByCat } from "@/data/newsArticles.js";
 import supabase from "@/lib/supabase";
 
 export interface Article {
@@ -21,10 +18,7 @@ export interface Article {
   views: number;
 }
 
-console.log(newsArticles);
-export const articles = await newsArticles;
-
-export const getMostViewedArticle = (): Article => {
+export const getMostViewedArticle = (articles): Article => {
   return articles.reduce((prev, current) =>
     prev.views > current.views ? prev : current
   );
