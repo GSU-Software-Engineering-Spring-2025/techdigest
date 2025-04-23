@@ -21,7 +21,7 @@ const ConfirmEmailPage = () => {
           <p className="text-sm text-gray-500">
             Didn't receive the email? Check your spam folder or
           </p>
-          <Button variant="default" className="px-4 py-2">
+          <Button variant="default" className="mt-3 px-4 py-2">
             Resend confirmation email
           </Button>
         </div>

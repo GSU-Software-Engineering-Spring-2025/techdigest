@@ -14,14 +14,14 @@ const ConfirmNewEmailPage = () => {
         </h1>
         <p className="text-gray-600">
           We've sent a confirmation link to both email addresses. Please click
-          the link in the other email's inbox to verify your account.
+          both links to update your email.
         </p>
 
         <div className="pt-4">
           <p className="text-sm text-gray-500">
             Didn't receive the email? Check your spam folder or
           </p>
-          <Button variant="default" className="px-4 py-2">
+          <Button variant="default" className="mt-3 px-4 py-2">
             Resend confirmation email
           </Button>
         </div>

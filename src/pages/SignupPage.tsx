@@ -76,7 +76,7 @@ const SignupPage = () => {
       const success = await signup(name, email, password);
 
       if (success) {
-        navigate("/");
+        navigate("/confirm-email");
       }
     } catch (error) {
       console.error("Signup error:", error);

@@ -63,20 +63,13 @@ const ProfilePage = () => {
     e.preventDefault();
     try {
       if (email !== user.email) {
-        const { data, error } = await supabase.auth.updateUser(
-          {
-            email: email,
-          },
-          {
-            emailRedirectTo: `${window.location.origin}/confirm-new-email`,
-          }
-        );
+        const { data, error } = await supabase.auth.updateUser({
+          email: email,
+        });
 
         if (error) throw error;
 
-        toast.error(
-          "Please check inboxes (old & new) to confirm email update."
-        );
+        navigate("/confirm-new-email");
       }
     } catch (error) {
       toast.error("Error updating profile: " + error);
