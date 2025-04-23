@@ -1,7 +1,8 @@
 # Dependencies
 node_modules
-/.pnp
+/pnp
 .pnp.js
+venv/
 
 # Testing
 /coverage

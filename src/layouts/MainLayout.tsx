@@ -1,4 +1,3 @@
-
 import { useAuth } from "@/context/AuthContext";
 import { Outlet } from "react-router-dom";
 import Sidebar from "@/components/Sidebar";
@@ -9,7 +8,7 @@ const MainLayout = () => {
   const { isAuthenticated } = useAuth();
 
   return (
-    <div className="min-h-screen bg-tech-light-gray flex flex-col">
+    <div className="min-h-screen bg-background text-foreground flex flex-col">
       {isAuthenticated ? (
         <div className="flex min-h-screen">
           <Sidebar />

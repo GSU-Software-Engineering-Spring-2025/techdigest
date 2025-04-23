@@ -13,12 +13,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/sonner";
 import { summarizeText } from "@/services/openai";
-import { useAuth } from "@/context/AuthContext"; // Import the useAuth hook
+import { useAuth } from "@/context/AuthContext";
+import { useTheme } from '@/context/ThemeContext'; // Add this import
 
 const ArticlePage = () => {
   const { articleId } = useParams<{ articleId: string }>();
   const location = useLocation();
-  const { user, isAuthenticated } = useAuth(); // Get authentication state
+  const { user, isAuthenticated } = useAuth();
+  const { isDarkMode } = useTheme(); // Add theme hook
 
   const passedArticle = location.state?.articleData;
 
@@ -33,6 +35,8 @@ const ArticlePage = () => {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [isLoading, setIsLoading] = useState(!passedArticle);
   const [summary, setSummary] = useState("");
+  const [comments, setComments] = useState([]); // Add state for comments
+  const [comment, setComment] = useState(""); // Add state for new comment
 
   const handleImageError = (
     e: React.SyntheticEvent<HTMLImageElement, Event>
@@ -85,7 +89,6 @@ const ArticlePage = () => {
 
     fetchArticle();
     if (articleId && isAuthenticated) {
-      // Only check liked status if authenticated
       const likedArticles = JSON.parse(
         localStorage.getItem("likedArticles") || "{}"
       );
@@ -96,7 +99,7 @@ const ArticlePage = () => {
       setHasLiked(!!likedArticles[articleId]);
       setHasDisliked(!!dislikedArticles[articleId]);
     }
-  }, [articleId, passedArticle, isAuthenticated]); // Add isAuthenticated to dependencies
+  }, [articleId, passedArticle, isAuthenticated]);
 
   useEffect(() => {
     const updateViewCount = async () => {
@@ -129,7 +132,6 @@ const ArticlePage = () => {
   const handleLike = useCallback(async () => {
     if (!articleId) return;
 
-    // Check if user is authenticated
     if (!isAuthenticated) {
       toast.error("Please log in to like articles");
       return;
@@ -170,12 +172,11 @@ const ArticlePage = () => {
     localStorage.setItem("likedArticles", JSON.stringify(likedArticles));
 
     toast.success("Article liked!");
-  }, [articleId, hasLiked, hasDisliked, likes, dislikes, isAuthenticated]); // Add isAuthenticated dependency
+  }, [articleId, hasLiked, hasDisliked, likes, dislikes, isAuthenticated]);
 
   const handleDislike = useCallback(async () => {
     if (!articleId) return;
 
-    // Check if user is authenticated
     if (!isAuthenticated) {
       toast.error("Please log in to dislike articles");
       return;
@@ -213,7 +214,7 @@ const ArticlePage = () => {
     localStorage.setItem("dislikedArticles", JSON.stringify(dislikedArticles));
 
     toast.error("Article disliked!");
-  }, [articleId, hasLiked, hasDisliked, likes, dislikes, isAuthenticated]); // Add isAuthenticated dependency
+  }, [articleId, hasLiked, hasDisliked, likes, dislikes, isAuthenticated]);
 
   const handleShowSummary = async () => {
     try {
@@ -240,29 +241,54 @@ const ArticlePage = () => {
     }
   };
 
+  const handleCommentSubmit = (e) => {
+    e.preventDefault();
+    if (!isAuthenticated) {
+      toast.error("Please log in to post comments");
+      return;
+    }
+    if (!comment.trim()) {
+      toast.error("Comment cannot be empty");
+      return;
+    }
+
+    const newComment = {
+      id: Date.now().toString(),
+      author: user?.username || "Anonymous",
+      text: comment,
+      date: new Date(),
+    };
+
+    setComments([...comments, newComment]);
+    setComment("");
+    toast.success("Comment posted!");
+  };
+
   if (isLoading) {
-    return <div className="flex justify-center p-8">Loading article...</div>;
+    return <div className={`flex justify-center p-8 ${isDarkMode ? 'text-foreground-dark' : 'text-foreground'}`}>Loading article...</div>;
   }
 
   if (!article) {
-    return <div className="flex justify-center p-8">Article not found</div>;
+    return <div className={`flex justify-center p-8 ${isDarkMode ? 'text-foreground-dark' : 'text-foreground'}`}>Article not found</div>;
   }
 
   const formattedDate = format(new Date(article.date), "MMMM dd, yyyy");
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="bg-white shadow-md rounded-lg overflow-hidden">
+      <div className={`shadow-md rounded-lg overflow-hidden ${isDarkMode ? 'bg-card-dark text-card-foreground-dark' : 'bg-card text-card-foreground'}`}>
         <div className="p-6 md:p-8">
-          <div className="mb-4 text-sm text-gray-500">
+          <div className={`mb-4 text-sm ${isDarkMode ? 'text-muted-foreground-dark' : 'text-muted-foreground'}`}>
             {article.category} • {formattedDate}
           </div>
 
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl md:text-4xl font-bold">{article.title}</h1>
+            <h1 className={`text-3xl md:text-4xl font-bold ${isDarkMode ? 'text-foreground-dark' : 'text-foreground'}`}>
+              {article.title}
+            </h1>
             <Button
               onClick={handleShowSummary}
-              className="px-4 py-2 rounded-md bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:opacity-90 transition"
+              className={`px-4 py-2 rounded-md bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:opacity-90 transition`}
               disabled={isSummarizing}
             >
               {isSummarizing ? (
@@ -304,8 +330,12 @@ const ArticlePage = () => {
               </AvatarFallback>
             </Avatar>
             <div className="ml-3">
-              <div className="font-medium">{article.authors}</div>
-              <div className="text-sm text-gray-500">Author</div>
+              <div className={`font-medium ${isDarkMode ? 'text-foreground-dark' : 'text-foreground'}`}>
+                {article.authors}
+              </div>
+              <div className={`text-sm ${isDarkMode ? 'text-muted-foreground-dark' : 'text-muted-foreground'}`}>
+                Author
+              </div>
             </div>
           </div>
 
@@ -319,13 +349,13 @@ const ArticlePage = () => {
           </div>
 
           {showSummary && (
-            <Card className="mb-8 border-l-4 border-blue-500 bg-blue-50/50">
+            <Card className={`mb-8 border-l-4 border-blue-500 ${isDarkMode ? 'bg-blue-50/20' : 'bg-blue-50/50'}`}>
               <CardContent className="p-6">
                 <div className="flex items-start">
-                  <div className="flex-shrink-0 p-2 bg-blue-100 rounded-full">
+                  <div className={`flex-shrink-0 p-2 rounded-full ${isDarkMode ? 'bg-blue-100/20' : 'bg-blue-100'}`}>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
-                      className="h-6 w-6 text-blue-600"
+                      className={`h-6 w-6 ${isDarkMode ? 'text-blue-400' : 'text-blue-600'}`}
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -339,17 +369,17 @@ const ArticlePage = () => {
                     </svg>
                   </div>
                   <div className="ml-4 flex-1">
-                    <h3 className="text-lg font-bold text-gray-900 mb-2">
+                    <h3 className={`text-lg font-bold ${isDarkMode ? 'text-gray-200' : 'text-gray-900'} mb-2`}>
                       AI Summary
                     </h3>
                     {isSummarizing ? (
                       <div className="space-y-2">
-                        <div className="h-4 bg-gray-200 rounded animate-pulse"></div>
-                        <div className="h-4 bg-gray-200 rounded animate-pulse w-5/6"></div>
-                        <div className="h-4 bg-gray-200 rounded animate-pulse w-4/6"></div>
+                        <div className={`h-4 rounded ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} animate-pulse`}></div>
+                        <div className={`h-4 rounded ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} animate-pulse w-5/6`}></div>
+                        <div className={`h-4 rounded ${isDarkMode ? 'bg-gray-600' : 'bg-gray-200'} animate-pulse w-4/6`}></div>
                       </div>
                     ) : (
-                      <p className="text-gray-700">
+                      <p className={isDarkMode ? 'text-gray-400' : 'text-gray-700'}>
                         {summary || "No summary available"}
                       </p>
                     )}
@@ -359,8 +389,8 @@ const ArticlePage = () => {
             </Card>
           )}
 
-          <div className="prose max-w-none mb-8">
-            <p className="text-xl text-gray-700 leading-relaxed mb-8 font-serif">
+          <div className={`prose max-w-none mb-8 ${isDarkMode ? 'text-foreground-dark' : 'text-foreground'}`}>
+            <p className={`text-xl leading-relaxed mb-8 font-serif ${isDarkMode ? 'text-muted-foreground-dark' : 'text-muted-foreground'}`}>
               {article.summary}
             </p>
             {article.body.split("\n\n").map((paragraph, idx) => (
@@ -370,12 +400,12 @@ const ArticlePage = () => {
             ))}
           </div>
 
-          <div className="flex flex-wrap items-center justify-between border-t border-b py-4 mb-8">
+          <div className={`flex flex-wrap items-center justify-between border-t border-b py-4 mb-8 ${isDarkMode ? 'border-border-dark' : 'border-border'}`}>
             <div className="flex items-center space-x-6 mb-4 md:mb-0">
               <Button
                 variant="ghost"
                 className={`flex items-center px-2 py-1 rounded-md ${
-                  hasLiked ? "bg-blue-100 text-blue-700" : "hover:bg-blue-50"
+                  hasLiked ? (isDarkMode ? 'bg-blue-500/20 text-blue-400' : 'bg-blue-100 text-blue-700') : (isDarkMode ? 'hover:bg-blue-500/10' : 'hover:bg-blue-50')
                 } transition`}
                 onClick={handleLike}
                 title={
@@ -392,7 +422,7 @@ const ArticlePage = () => {
               <Button
                 variant="ghost"
                 className={`flex items-center px-2 py-1 rounded-md ${
-                  hasDisliked ? "bg-red-100 text-red-700" : "hover:bg-red-50"
+                  hasDisliked ? (isDarkMode ? 'bg-red-500/20 text-red-400' : 'bg-red-100 text-red-700') : (isDarkMode ? 'hover:bg-red-500/10' : 'hover:bg-red-50')
                 } transition`}
                 onClick={handleDislike}
                 title={
@@ -402,16 +432,57 @@ const ArticlePage = () => {
                 }
               >
                 <ThumbsDown
-                  className={`h-5 w-5 mr-2 ${
-                    hasDisliked ? "fill-current" : ""
-                  }`}
+                  className={`h-5 w-5 mr-2 ${hasDisliked ? "fill-current" : ""}`}
                 />{" "}
                 {dislikes}
               </Button>
-              <div className="flex items-center text-gray-500">
-                <Eye className="h-5 w-5 mr-2" /> {views} Views
+              <div className={`flex items-center ${isDarkMode ? 'text-muted-foreground-dark' : 'text-muted-foreground'}`}>
+                <Eye className={`h-5 w-5 mr-2 ${isDarkMode ? 'text-muted-foreground-dark' : 'text-muted-foreground'}`} /> {views} Views
               </div>
             </div>
+          </div>
+
+          <div className={`border-t pt-8 ${isDarkMode ? 'border-border-dark' : 'border-border'}`}>
+            <h3 className={`text-xl font-bold ${isDarkMode ? 'text-foreground-dark' : 'text-foreground'} mb-4`}>Comments ({comments.length})</h3>
+            <p className={`mb-4 text-sm ${isDarkMode ? 'text-muted-foreground-dark' : 'text-muted-foreground'}`}>
+              Please keep comments respectful and on-topic.
+            </p>
+            
+            <form onSubmit={handleCommentSubmit} className="mb-6">
+              <Textarea 
+                value={comment} 
+                onChange={(e) => setComment(e.target.value)} 
+                placeholder="Add a comment..." 
+                className={`mb-3 ${isDarkMode ? 'bg-background-dark text-foreground-dark border-border-dark' : 'bg-background text-foreground border-border'}`}
+              />
+              <Button type="submit">Post Comment</Button>
+            </form>
+            
+            {comments.length > 0 ? (
+              <div className="space-y-4">
+                {comments.map((comment) => (
+                  <div key={comment.id} className={`border-b pb-4 ${isDarkMode ? 'border-border-dark' : 'border-border'}`}>
+                    <div className="flex items-center mb-2">
+                      <Avatar className="h-8 w-8">
+                        <AvatarFallback>{comment.author[0]}</AvatarFallback>
+                      </Avatar>
+                      <div className="ml-2">
+                        <div className={`font-medium ${isDarkMode ? 'text-foreground-dark' : 'text-foreground'}`}>{comment.author}</div>
+                        <div className={`text-xs ${isDarkMode ? 'text-muted-foreground-dark' : 'text-muted-foreground'}`}>
+                          {format(new Date(comment.date), "MMM dd, yyyy 'at' h:mm a")}
+                        </div>
+                      </div>
+                    </div>
+                    <p className={isDarkMode ? 'text-foreground-dark' : 'text-foreground'}>{comment.text}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className={`text-muted-foreground flex items-center justify-center py-8 ${isDarkMode ? 'text-muted-foreground-dark' : 'text-muted-foreground'}`}>
+                <MessageSquare className={`mr-2 h-5 w-5 ${isDarkMode ? 'text-muted-foreground-dark' : 'text-muted-foreground'}`} />
+                No comments yet. Be the first to comment!
+              </div>
+            )}
           </div>
         </div>
       </div>
