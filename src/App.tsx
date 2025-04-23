@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -14,6 +13,8 @@ import SignupPage from "@/pages/SignupPage";
 import CategoriesPage from "@/pages/CategoriesPage";
 import ProfilePage from "@/pages/ProfilePage";
 import NotFoundPage from "@/pages/NotFoundPage";
+import ConfirmEmailPage from "./pages/confirmEmailPage";
+import ConfirmNewEmailPage from "./pages/confirmNewEmailPage";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,11 @@ const App = () => (
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="*" element={<NotFoundPage />} />
+            <Route path="/confirm-email" element={<ConfirmEmailPage />}></Route>
+            <Route
+              path="/confirm-new-email"
+              element={<ConfirmNewEmailPage />}
+            ></Route>
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
