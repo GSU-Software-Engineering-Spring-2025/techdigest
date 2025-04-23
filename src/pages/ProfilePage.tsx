@@ -21,18 +21,25 @@ const ProfilePage = () => {
   const { user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
-  const [name, setName] = useState(user?.name || "");
-  const [email, setEmail] = useState(user?.email || "");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
   const [currentPass, setCurrentPass] = useState("");
   const [passConfirm, setPassConfirm] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(true); // Add loading state
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Check if user is authenticated
         const { data, error } = await supabase.auth.getUser();
 
-        if (error) throw error;
+        if (error || !data.user) {
+          // Only redirect if we've confirmed the user isn't authenticated
+          setIsLoading(false);
+          navigate("/login");
+          return;
+        }
 
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
@@ -40,28 +47,44 @@ const ProfilePage = () => {
           .eq("id", data.user.id)
           .maybeSingle();
 
-        if (error) throw error;
+        if (profileError) throw profileError;
 
-        setName(profileData.full_name);
-        setEmail(profileData.email);
+        // Set form values from profile data
+        if (profileData) {
+          setName(profileData.full_name || "");
+          setEmail(profileData.email || "");
+        }
+
+        // Set page title
+        document.title = "My Profile - TechDigest";
+
+        // Set loading to false after data is fetched
+        setIsLoading(false);
       } catch (error) {
         console.error("Error fetching user data:", error.message);
-        return;
+        setIsLoading(false);
       }
     };
 
     fetchData();
+  }, []); // Remove dependencies to ensure it only runs once on mount
 
-    document.title = "My Profile - TechDigest";
-
-    if (!isAuthenticated) {
-      navigate("/login");
+  // Update form when user data changes (helpful after login)
+  useEffect(() => {
+    if (user) {
+      setName(user.name || name);
+      setEmail(user.email || email);
     }
-  }, [isAuthenticated, navigate, user]);
+  }, [user]);
 
   const handleEmailUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if (!user) {
+        toast.error("You must be logged in to update your email");
+        return;
+      }
+
       if (email !== user.email) {
         const { data, error } = await supabase.auth.updateUser({
           email: email,
@@ -79,6 +102,11 @@ const ProfilePage = () => {
   const handleNameUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if (!user) {
+        toast.error("You must be logged in to update your name");
+        return;
+      }
+
       const { data, error } = await supabase
         .from("profiles")
         .update({ full_name: name })
@@ -95,6 +123,11 @@ const ProfilePage = () => {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      if (!user) {
+        toast.error("You must be logged in to change your password");
+        return;
+      }
+
       if (passConfirm !== password) {
         toast.error("Passwords do not match");
         return;
@@ -117,12 +150,28 @@ const ProfilePage = () => {
         toast.error("Failed to update password: " + updateError.message);
       } else {
         toast.success("Password successfully updated");
+        // Clear the password fields
+        setCurrentPass("");
+        setPassword("");
+        setPassConfirm("");
       }
     } catch (error) {
       toast.error("An unexpected error occurred");
       console.error(error);
     }
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="max-w-4xl mx-auto flex justify-center items-center min-h-[50vh]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-tech-purple mx-auto"></div>
+          <p className="mt-4 text-gray-500">Loading profile...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-4xl mx-auto">
