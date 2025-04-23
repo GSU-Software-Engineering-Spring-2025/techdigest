@@ -9,7 +9,7 @@ import { toast } from "@/components/ui/sonner";
 
 const SignupPage = () => {
   const { signup } = useAuth();
-
+  const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -74,6 +74,7 @@ const SignupPage = () => {
     try {
       const { data: success, error } = await signup(name, email, password);
       if (error) throw error;
+      navigate("/login");
     } catch (error) {
       console.error("Signup error:", error);
       toast.error("An unexpected error occurred. Please try again.");

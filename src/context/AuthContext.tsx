@@ -168,9 +168,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (data.user) {
-        toast.success(
-          "Account created successfully! Please check your email for verification."
-        );
+        toast.success("Account created successfully!");
 
         // Create a profile record in the database
         const { data: profileData, error: profileError } = await supabase
