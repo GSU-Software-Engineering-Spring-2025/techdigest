@@ -1,4 +1,5 @@
 import { useParams, useLocation } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useState, useEffect } from "react";
 import { getArticleById, getArticlesByCategory } from "@/data/articles";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/sonner";
 import { updateArticle } from "@/data/articles";
+import { summarizeText } from "@/services/openai"; 
 
 const ArticlePage = () => {
   const { articleId } = useParams<{ articleId: string }>();
@@ -91,6 +93,7 @@ const ArticlePage = () => {
       document.title = `${article.title} - TechDigest`;
       setViews((prev) => prev + 1);
       updateArticle("views", views + 1, articleId);
+      setViews(article.views + 1); // Increment views for demo purposes
     }
   }, [article]);
 
@@ -106,10 +109,24 @@ const ArticlePage = () => {
     updateArticle("dislikes", dislikes + 1, articleId);
   };
 
-  const handleShowSummary = () => {
-    // TODO: Call AI summary API
-    setShowSummary(true);
-    toast.success("Article summarized with AI!");
+  const handleShowSummary = async () => {
+    try {
+      console.log('Summarizing article with AI...');
+      if (article) {
+        const data = article.content;
+        const summary = await summarizeText(data);
+        console.log(summary);
+      }
+      setShowSummary(true);
+      toast.success("Article summarized with AI!");
+    } catch (error: any) {
+      console.error(error);
+      if (error.response?.status === 429) {
+        toast.error("Too many requests. Please try again later.");
+      } else {
+        toast.error("Failed to summarize article.");
+      }
+    }
   };
 
   const handleCommentSubmit = (e: React.FormEvent) => {
@@ -146,9 +163,18 @@ const ArticlePage = () => {
             {article.category} • {formattedDate}
           </div>
 
-          <h1 className="text-3xl md:text-4xl font-bold mb-6">
+          {/* Header with title and top right summarize button */}
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-3xl md:text-4xl font-bold">
             {article.title}
           </h1>
+            <Button 
+              onClick={handleShowSummary} 
+              className="px-4 py-2 rounded-md bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:opacity-90 transition"
+            >
+              Summarize with AI
+            </Button>
+          </div>
 
           <div className="flex items-center mb-8">
             <Avatar className="h-10 w-10">
@@ -170,6 +196,21 @@ const ArticlePage = () => {
               className="w-full h-full object-cover rounded-lg"
             />
           </div>
+          
+          {/* AI Summary appears at the top before the content */}
+          {showSummary && (
+            <Card className="mb-8 border-l-4 border-tech-purple">
+              <CardContent className="p-4">
+                <h3 className="font-bold mb-2">AI Summary</h3>
+                <p>
+                  This article discusses {article.title.toLowerCase()} and its implications for the
+                  technology industry. The key points include advancements in {article.category}, potential
+                  applications, and future developments. The author highlights the significance of these
+                  technologies and how they might impact various industries in the coming years.
+                </p>
+              </CardContent>
+            </Card>
+          )}
 
           <div className="prose max-w-none mb-8">
             <p className="mb-4 text-lg leading-relaxed">{article.summary}</p>
@@ -180,19 +221,28 @@ const ArticlePage = () => {
             ))}
           </div>
 
+          {/* Bottom controls including summarize button */}
           <div className="flex flex-wrap items-center justify-between border-t border-b py-4 mb-8">
             <div className="flex items-center space-x-6 mb-4 md:mb-0">
               <Button
+                
                 variant="ghost"
-                className="flex items-center"
+                
+                className="flex items-center px-2 py-1 rounded-md hover:bg-blue-50 transition"
+               
                 onClick={handleLike}
+              
               >
                 <ThumbsUp className="h-5 w-5 mr-2" /> {likes}
               </Button>
               <Button
+                
                 variant="ghost"
-                className="flex items-center"
+                
+                className="flex items-center px-2 py-1 rounded-md hover:bg-red-50 transition"
+               
                 onClick={handleDislike}
+              
               >
                 <ThumbsDown className="h-5 w-5 mr-2" /> {dislikes}
               </Button>
@@ -201,25 +251,14 @@ const ArticlePage = () => {
               </div>
             </div>
 
-            <Button onClick={handleShowSummary}>Summarize with AI</Button>
+            <Button 
+              onClick={handleShowSummary}
+              className="px-4 py-2 rounded-md bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:opacity-90 transition"
+            >
+              Summarize with AI
+            </Button>
           </div>
-
-          {showSummary && (
-            <Card className="mb-8 border-l-4 border-tech-purple">
-              <CardContent className="p-4">
-                <h3 className="font-bold mb-2">AI Summary</h3>
-                <p>
-                  This article discusses {article.title.toLowerCase()} and its
-                  implications for the technology industry. The key points
-                  include advancements in {article.category}, potential
-                  applications, and future developments in this field. The
-                  author highlights the significance of these technologies and
-                  how they might impact various industries in the coming years.
-                </p>
-              </CardContent>
-            </Card>
-          )}
-
+          
           <div className="border-t pt-8">
             <h3 className="text-xl font-bold mb-4">
               Comments ({comments.length})
@@ -232,7 +271,12 @@ const ArticlePage = () => {
                 placeholder="Add a comment..."
                 className="mb-3"
               />
-              <Button type="submit">Post Comment</Button>
+              <Button 
+                type="submit"
+                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 transition"
+              >
+                Post Comment
+              </Button>
             </form>
 
             {comments.length > 0 ? (
