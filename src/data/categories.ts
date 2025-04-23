@@ -43,14 +43,14 @@ export const categories: Category[] = [
     color: "bg-purple-500",
   },
   {
-    id: "quantum-computing",
+    id: "quantumcomputing",
     name: "Quantum Computing",
     description: "Quantum computing research and applications",
     imageUrl: "https://images.unsplash.com/photo-1635070041078-e363dbe005cb",
     color: "bg-indigo-500",
   },
   {
-    id: "vr-ar",
+    id: "vrar",
     name: "VR/AR",
     description: "Virtual and augmented reality technologies",
     imageUrl: "https://images.unsplash.com/photo-1592478411213-6153e4ebc07d",

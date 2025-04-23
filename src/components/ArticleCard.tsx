@@ -27,7 +27,7 @@ const ArticleCard: React.FC<ArticleCardProps> = ({ article }) => {
 
   return (
     <Card className="overflow-hidden h-full transition-shadow hover:shadow-lg">
-      <Link to={`/article/${article.id}`}>
+      <Link to={`/article/${article.id}`} state={{ articleData: article }}>
         <div className="aspect-video relative overflow-hidden">
           <img
             src={article.image}

@@ -22,6 +22,8 @@ const CategoryPage = () => {
         setCategory(cat);
 
         if (cat) {
+          // Simulate network delay for demo purposes (remove in production)
+          await new Promise((resolve) => setTimeout(resolve, 1000));
           const articles = await getArticlesByCategory(cat.name);
           setCategoryArticles(articles);
           setSortedArticles(articles);
@@ -62,11 +64,51 @@ const CategoryPage = () => {
   }, [sortOption, categoryArticles]);
 
   if (isLoading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="animate-pulse space-y-8">
+        {/* Header Skeleton */}
+        <div className="h-40 bg-gray-200 dark:bg-gray-700 rounded-lg mb-8"></div>
+
+        {/* Tabs Skeleton */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="flex space-x-2">
+            {[...Array(4)].map((_, i) => (
+              <div
+                key={i}
+                className="h-10 w-20 bg-gray-200 dark:bg-gray-700 rounded-md"
+              ></div>
+            ))}
+          </div>
+        </div>
+
+        {/* Articles Grid Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="space-y-4">
+              <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+              <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
   }
 
   if (!category) {
-    return <div>Category not found</div>;
+    return (
+      <div className="flex flex-col items-center justify-center h-64">
+        <div className="text-4xl mb-4">😕</div>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+          Category not found
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400">
+          The category you're looking for doesn't exist.
+        </p>
+      </div>
+    );
   }
 
   return (

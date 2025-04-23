@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from newsapi import NewsApiClient
+from eventregistry import *
 import logging
 from datetime import datetime, timedelta
 
@@ -18,135 +18,204 @@ app.add_middleware(
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Initialize NewsAPI client
-newsapi = NewsApiClient(api_key='cfc4a0e26c2b42feb0932b548e728c70')
+# Initialize EventRegistry client
+er = EventRegistry(apiKey="812fa6b8-257c-4b3c-a6b4-55f412e1050a")
 
-# Define date range - last 30 days
 # Define date range - last 2 years (730 days)
-from_date = (datetime.now() - timedelta(days=30)).strftime('%Y-%m-%d')
+forceMaxDataTimeWindow = "730"
 
 @app.get("/api/articles")
 async def getArticles():
     try:
-        # Using get_everything for more comprehensive results
-        articles = newsapi.get_everything(
-            q='artificial intelligence OR AI technology',
-            language='en',
-            sort_by='relevancy',
-            from_param=from_date,
-            page_size=20
-        )
+        query = {
+            "$query": {
+                "$and": [
+                    {
+                        "$or": [
+                            {
+                                "keyword": "AI",
+                                "keywordLoc": "body" 
+                            },
+                            {
+                                "keyword": "technology",
+                                "keywordLoc": "body"
+                            },
+                            {
+                                "conceptUri": "http://en.wikipedia.org/wiki/Technology"
+                            }
+                        ]
+                    },
+                    {
+                        "lang": "eng"
+                    }
+                ]
+            },
+            "$filter": {
+                "forceMaxDataTimeWindow": forceMaxDataTimeWindow,
+                "startSourceRankPercentile": 0,
+                "endSourceRankPercentile": 20 
+            }
+        }
         
-        parsed_articles = []
-        for article in articles["articles"]:
-            # Skip articles with missing key fields
-            if not article.get("title") or not article.get("url"):
-                continue
-            
-            parsed_articles.append({
-                "source": article["source"]["name"] if article.get("source") and article["source"].get("name") else "Unknown Source",
-                "authors": article.get("author", "Unknown Author"),
-                "title": article.get("title", ""),
-                "summary": article.get("description", "No description available"),
-                # Using a combination of URL and date to create a unique identifier
-                "id": f"{article.get('url', '')}_{article.get('publishedAt', '').replace(':', '-')}",                
-                "url": article.get("url", ""),
-                "image": article.get("urlToImage", ""),
-                "date": article.get("publishedAt", ""),
-                "body": article.get("content", "No content available"),
-                "category": "Tech"
-            })
-            
-        logger.info(f"Retrieved {len(parsed_articles)} general articles")
-        return parsed_articles
+        q = QueryArticlesIter.initWithComplexQuery(query)
+        articles_list = list(q.execQuery(er, maxItems=25))
+        
+        logger.info(f"Retrieved {len(articles_list)} general articles")
+        return parse_articles(articles_list)
     except Exception as e:
         logger.error(f"Error retrieving articles: {str(e)}")
         return []
 
-# Dictionary defining enhanced search parameters for each category
+# Dictionary with simplified queries for different categories
 CATEGORY_QUERIES = {
     "ai": {
-        "query": "artificial intelligence OR AI advances OR ai ethics OR deep learning OR neural networks",
+        "keywords": ["AI", "artificial intelligence", "machine learning", "GPT"],
+        "concepts": ["http://en.wikipedia.org/wiki/Artificial_intelligence"],
         "category": "AI"
     },
     "machine learning": {
-        "query": "machine learning OR ML models OR data science OR predictive analytics OR neural networks OR ML algorithms",
+        "keywords": ["machine learning", "ML", "data science"],
+        "concepts": ["http://en.wikipedia.org/wiki/Machine_Learning"],
         "category": "ML"
     },
     "iot": {
-        "query": "internet of things OR IoT devices OR connected devices OR smart home OR industrial IoT OR IoT security",
+        "keywords": ["IoT", "Internet of Things", "connected devices"],
+        "concepts": ["http://en.wikipedia.org/wiki/Internet_of_things"],
         "category": "IoT"
     },
     "blockchain": {
-        "query": "blockchain technology OR blockchain applications OR decentralized ledger OR smart contracts OR web3 OR blockchain security",
+        "keywords": ["blockchain", "cryptocurrency", "Bitcoin", "Ethereum"],
+        "concepts": ["http://en.wikipedia.org/wiki/Blockchain"],
         "category": "Blockchain"
     },
     "quantum computing": {
-        "query": "quantum computing OR quantum supremacy OR quantum processors OR quantum algorithms OR quantum cryptography OR qubits",
+        "keywords": ["quantum computing", "quantum computer"],
+        "concepts": ["http://en.wikipedia.org/wiki/Quantum_computing"],
         "category": "Quantum Computing"
     },
     "virtual reality": {
-        "query": "virtual reality OR augmented reality OR VR headsets OR metaverse OR AR applications OR VR gaming OR mixed reality",
+        "keywords": ["VR", "virtual reality", "augmented reality", "AR", "metaverse"],
+        "concepts": ["http://en.wikipedia.org/wiki/Virtual_reality"],
         "category": "VR"
     },
     "cybersecurity": {
-        "query": "cybersecurity OR network security OR data breaches OR information security OR ransomware OR cyber attacks OR cloud security",
+        "keywords": ["cybersecurity", "data breach", "hacking"],
+        "concepts": ["http://en.wikipedia.org/wiki/Computer_security"],
         "category": "Networking"
     },
     "robotics": {
-        "query": "robotics OR autonomous robots OR industrial automation OR robot learning OR humanoid robots OR robotic process automation",
+        "keywords": ["robotics", "robot", "automation"],
+        "concepts": ["http://en.wikipedia.org/wiki/Robotics"],
         "category": "Robotics"
     }
 }
 
+def parse_articles(articles_list):
+    parsed_articles = []
+
+    for article in articles_list:
+        # Skip duplicates
+        if article.get("isDuplicate"):
+            continue
+            
+        # Extract author names
+        authors = article.get("authors", [])
+        author_names = [author.get("name", "Unknown") for author in authors]
+        
+        # Extract categories
+        categories = article.get("categories", [])
+        category_names = [category.get("label", "Unknown") for category in categories]
+        
+        # Create a summary if body exists
+        summary = ""
+        if article.get("body"):
+            # Create a summary of up to 200 characters
+            summary = article.get("body", "")[:200]
+            if len(article.get("body", "")) > 200:
+                summary += "..."
+                
+        # Use a default image if none exists
+        image = article.get("image") if article.get("image") else "./src/components/ui/placeholder.png"
+        
+        parsed_articles.append({
+            "source": article.get("source", {}).get("title", "Unknown Source"),
+            "authors": ", ".join(author_names) if author_names else "Unknown Author",
+            "title": article.get("title", ""),
+            "summary": article.get("description", summary),
+            "id": article.get("uri", ""),
+            "url": article.get("url", ""),
+            "image": image,
+            "date": article.get("dateTime", article.get("date", "")),
+            "body": article.get("body", "No content available"),
+            "category": ", ".join(category_names) if category_names else "Tech"
+        })
+    
+    return parsed_articles
+
 async def getArticlesByCat(category):
     try:
-        # Get the enhanced query for this category
-        category_info = CATEGORY_QUERIES.get(category, {"query": category, "category": "Tech"})
-        enhanced_query = category_info["query"]
+        # Get enhanced query parameters for this category
+        category_info = CATEGORY_QUERIES.get(category, {
+            "keywords": [category],
+            "concepts": [],
+            "category": "Tech"
+        })
+        
+        keywords = category_info["keywords"]
+        concepts = category_info["concepts"]
         display_category = category_info["category"]
         
-        logger.info(f"Fetching articles with query: {enhanced_query}")
-        
-        # Try getting everything first for more comprehensive results
-        articles = newsapi.get_everything(
-            q=enhanced_query,
-            language='en',
-            sort_by='relevancy',
-            from_param=from_date,
-            page_size=20
-        )
-        
-        # If we don't get enough results, fall back to top headlines
-        if len(articles["articles"]) < 5:
-            logger.info(f"Not enough results from get_everything, falling back to top_headlines for {category}")
-            articles = newsapi.get_top_headlines(
-                q=category,
-                category='technology',
-                language='en',
-                country='us',
-                page_size=20
-            )
-        
-        parsed_articles = []
-        for article in articles["articles"]:
-            # Skip articles with missing essential fields
-            if not article.get("title") or not article.get("url"):
-                continue
-                
-            parsed_articles.append({
-                "source": article["source"]["name"] if article.get("source") and article["source"].get("name") else "Unknown Source",
-                "authors": article.get("author", "Unknown Author"),
-                "title": article.get("title", ""),
-                "summary": article.get("description", "No description available"),
-                "id": article.get("url", ""),
-                "url": article.get("url", ""),
-                "image": article.get("urlToImage", ""),
-                "date": article.get("publishedAt", ""),
-                "body": article.get("content", "No content available"),
-                "category": display_category
+        keyword_conditions = []
+        for keyword in keywords:
+            keyword_conditions.append({
+                "keyword": keyword,
+                "keywordLoc": "body"
             })
         
+        concept_conditions = []
+        for concept in concepts:
+            concept_conditions.append({
+                "conceptUri": concept
+            })
+        
+        or_conditions = []
+        if keyword_conditions:
+            or_conditions.append({
+                "$or": keyword_conditions
+            })
+        if concept_conditions:
+            or_conditions.append({
+                "$or": concept_conditions
+            })
+        
+        query = {
+            "$query": {
+                "$and": [
+                    {
+                        "$or": or_conditions
+                    },
+                    {
+                        "lang": "eng"
+                    }
+                ]
+            },
+            "$filter": {
+                "forceMaxDataTimeWindow": forceMaxDataTimeWindow,
+                "startSourceRankPercentile": 0,
+                "endSourceRankPercentile": 60 
+            }
+        }
+        
+        logger.info(f"Executing query for category: {category}")
+        q = QueryArticlesIter.initWithComplexQuery(query)
+        articles_list = list(q.execQuery(er, maxItems=25))
+        
+        parsed_articles = []
+        for article in parse_articles(articles_list):
+            # Override the category with our defined category
+            article["category"] = display_category
+            parsed_articles.append(article)
+            
         logger.info(f"Retrieved {len(parsed_articles)} articles for category {category}")
         return parsed_articles
     except Exception as e:
@@ -163,56 +232,70 @@ async def getArticlesML():
 
 @app.get("/api/articles/IoT")
 async def getArticlesIOT():
-    return await getArticlesByCat("iot")
+    return await getArticlesByCat("internet of things")
 
 @app.get("/api/articles/Blockchain")
 async def getArticlesBlockchain():
     return await getArticlesByCat("blockchain")
 
-@app.get("/api/articles/quantum-computing")
+@app.get("/api/articles/Quantum Computing")
 async def getArticlesQuantumComputing():
     return await getArticlesByCat("quantum computing")
 
-@app.get("/api/articles/vr")
+@app.get("/api/articles/VR/AR")
 async def getArticlesVirtualReality():
     return await getArticlesByCat("virtual reality")
 
 @app.get("/api/articles/Networking")
 async def getArticlesCybersecurity():
-    return await getArticlesByCat("cybersecurity")
+    return await getArticlesByCat("networking")
 
 @app.get("/api/articles/Robotics")
 async def getArticlesRobotics():
     return await getArticlesByCat("robotics")
 
-# Add a trending tech endpoint
+# Add a trending tech endpoint with simplified query
 @app.get("/api/articles/trending")
 async def getTrendingTech():
     try:
-        articles = newsapi.get_top_headlines(
-            category='technology',
-            language='en',
-            country='us',
-            page_size=20
-        )
+        # Simplified query for recent tech news
+        query = {
+            "$query": {
+                "$and": [
+                    {
+                        "$or": [
+                            {
+                                "keyword": "tech",
+                                "keywordLoc": "body"
+                            },
+                            {
+                                "keyword": "technology",
+                                "keywordLoc": "body"
+                            },
+                            {
+                                "conceptUri": "http://en.wikipedia.org/wiki/Technology"
+                            }
+                        ]
+                    },
+                    {
+                        "lang": "eng"
+                    }
+                ]
+            },
+            "$filter": {
+                "forceMaxDataTimeWindow": "120", 
+                "startSourceRankPercentile": 0,
+                "endSourceRankPercentile": 30 
+            }
+        }
+        
+        q = QueryArticlesIter.initWithComplexQuery(query)
+        articles_list = list(q.execQuery(er, maxItems=25))
         
         parsed_articles = []
-        for article in articles["articles"]:
-            if not article.get("title") or not article.get("url"):
-                continue
-                
-            parsed_articles.append({
-                "source": article["source"]["name"] if article.get("source") and article["source"].get("name") else "Unknown Source",
-                "authors": article.get("author", "Unknown Author"),
-                "title": article.get("title", ""),
-                "summary": article.get("description", "No description available"),
-                "id": article.get("url", ""),
-                "url": article.get("url", ""),
-                "image": article.get("urlToImage", ""),
-                "date": article.get("publishedAt", ""),
-                "body": article.get("content", "No content available"),
-                "category": "Trending"
-            })
+        for article in parse_articles(articles_list):
+            article["category"] = "Trending"
+            parsed_articles.append(article)
             
         logger.info(f"Retrieved {len(parsed_articles)} trending articles")
         return parsed_articles
@@ -224,91 +307,234 @@ if __name__ == "__main__":
     import uvicorn
     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
 
-# DND
+# Fallback API
+
+# from fastapi import FastAPI
+# from fastapi.middleware.cors import CORSMiddleware
+# from newsapi import NewsApiClient
+# import logging
+# from datetime import datetime, timedelta
+
+# app = FastAPI()
+
+# # Configure CORS
+# app.add_middleware(
+#     CORSMiddleware,
+#     allow_origins=["http://localhost:8081"],  # Your Vite dev server
+#     allow_methods=["GET"],
+#     allow_headers=["*"]
+# )
+
+# # Setup logging
+# logging.basicConfig(level=logging.INFO)
+# logger = logging.getLogger(__name__)
+
+# # Initialize NewsAPI client
+# newsapi = NewsApiClient(api_key='cfc4a0e26c2b42feb0932b548e728c70')
+
+# from_date = (datetime.now() - timedelta(days=31)).strftime('%Y-%m-%d')
+
+# @app.get("/api/articles")
 # async def getArticles():
-#     er = EventRegistry(apiKey = "812fa6b8-257c-4b3c-a6b4-55f412e1050a")
-#     query = {
-#   "$query": {
-#     "$and": [
-#       {
-#         "$or": [
-#           {
-#             "keyword": "AI",
-#             "keywordLoc": "title"
-#           },
-#           {
-#             "$and": [
-#               {
-#                 "conceptUri": "http://en.wikipedia.org/wiki/Software"
-#               },
-#               {
-#                 "conceptUri": "http://en.wikipedia.org/wiki/Technology"
-#               }
-#             ]
-#           }
-#         ]
-#       },
-#       {
-#         "categoryUri": "dmoz/Computers"
-#       },
-#       {
-#         "$or": [
-#           {
-#             "locationUri": "http://en.wikipedia.org/wiki/North_America"
-#           }
-#         ]
-#       },
-#       {
-#         "$or": [
-#           {
-#             "sourceLocationUri": "http://en.wikipedia.org/wiki/North_America"
-#           }
-#         ]
-#       },
-#       {
-#         "lang": "eng"
-#       }
-#     ]
-#   },
-#   "$filter": {
-#     "forceMaxDataTimeWindow": "31",
-#     "startSourceRankPercentile": 0,
-#     "endSourceRankPercentile": 30
-#   }
+#     try:
+#         # Using get_everything for more comprehensive results
+#         articles = newsapi.get_everything(
+#             q='artificial intelligence OR AI technology',
+#             language='en',
+#             sort_by='relevancy',
+#             from_param=from_date,
+#             page_size=20
+#         )
+        
+#         parsed_articles = []
+#         for article in articles["articles"]:
+#             # Skip articles with missing key fields
+#             if not article.get("title") or not article.get("url"):
+#                 continue
+            
+#             parsed_articles.append({
+#                 "source": article["source"]["name"] if article.get("source") and article["source"].get("name") else "Unknown Source",
+#                 "authors": article.get("author", "Unknown Author"),
+#                 "title": article.get("title", ""),
+#                 "summary": article.get("description", "No description available"),              
+#                 "id": str(hash(article.get('url', '') + article.get('publishedAt', '')))[:8],                
+#                 "url": article.get("url", ""),
+#                 "image": article.get("urlToImage", ""),
+#                 "date": article.get("publishedAt", ""),
+#                 "body": article.get("content", "No content available"),
+#                 "category": "Tech"
+#             })
+            
+#         logger.info(f"Retrieved {len(parsed_articles)} general articles")
+#         return parsed_articles
+#     except Exception as e:
+#         logger.error(f"Error retrieving articles: {str(e)}")
+#         return []
+
+# # Dictionary defining enhanced search parameters for each category
+# CATEGORY_QUERIES = {
+#     "ai": {
+#         "query": "artificial intelligence OR AI advances OR ai ethics OR deep learning OR neural networks",
+#         "category": "AI"
+#     },
+#     "machine learning": {
+#         "query": "machine learning OR ML models OR data science OR predictive analytics OR neural networks OR ML algorithms",
+#         "category": "ML"
+#     },
+#     "iot": {
+#         "query": "internet of things OR IoT devices OR connected devices OR smart home OR industrial IoT OR IoT security",
+#         "category": "IoT"
+#     },
+#     "blockchain": {
+#         "query": "blockchain technology OR blockchain applications OR decentralized ledger OR smart contracts OR web3 OR blockchain security",
+#         "category": "Blockchain"
+#     },
+#     "quantum computing": {
+#         "query": "quantum computing OR quantum supremacy OR quantum processors OR quantum algorithms OR quantum cryptography OR qubits",
+#         "category": "Quantum Computing"
+#     },
+#     "virtual reality": {
+#         "query": "virtual reality OR augmented reality OR VR headsets OR metaverse OR AR applications OR VR gaming OR mixed reality",
+#         "category": "VR"
+#     },
+#     "cybersecurity": {
+#         "query": "cybersecurity OR network security OR data breaches OR information security OR ransomware OR cyber attacks OR cloud security",
+#         "category": "Networking"
+#     },
+#     "robotics": {
+#         "query": "robotics OR autonomous robots OR industrial automation OR robot learning OR humanoid robots OR robotic process automation",
+#         "category": "Robotics"
+#     }
 # }
-#     q = QueryArticlesIter.initWithComplexQuery(query)
 
-#     articles_list = list(q.execQuery(er, maxItems=25))
-#     parsed_articles = []
-
-#     for article in articles_list:
-#     # Extract author names (handle cases where 'authors' is missing/empty)
-#         authors = article.get("authors", [])
-#         author_names = [author.get("name", "Unknown") for author in authors]
-#         categories = article.get("categories", [])
-#         category_names = [category.get("label", "Unknown") for category in categories]
-
-#         if article.get("isDuplicate"):
-#             continue
+# async def getArticlesByCat(category):
+#     try:
+#         # Get the enhanced query for this category
+#         category_info = CATEGORY_QUERIES.get(category, {"query": category, "category": "Tech"})
+#         enhanced_query = category_info["query"]
+#         display_category = category_info["category"]
         
-#         parsed_articles.append({
-#             "id": article.get("uri"),
-#             "title": article.get("title"),
-#             "date": article.get("date"),
-#             "url": article.get("url"),
-#             "summary": article.get("body", "")[:200] + "..." if article.get("body") else "",
-#             "body": article.get("body"),
-#             "source": article.get("source", {}).get("title"),
-#             "image": article.get("image") if article.get("image") else "./src/components/ui/placeholder.png",
-#             "authors": ", ".join(author_names) if author_names else "No authors listed",
-#             "categories": ", ".join(category_names) if category_names else "Tech"
-#         })
+#         logger.info(f"Fetching articles with query: {enhanced_query}")
         
-#     return {"articles": parsed_articles}
+#         # Try getting everything first for more comprehensive results
+#         articles = newsapi.get_everything(
+#             q=enhanced_query,
+#             language='en',
+#             sort_by='relevancy',
+#             from_param=from_date,
+#             page_size=20
+#         )
+        
+#         # If we don't get enough results, fall back to top headlines
+#         if len(articles["articles"]) < 5:
+#             logger.info(f"Not enough results from get_everything, falling back to top_headlines for {category}")
+#             articles = newsapi.get_top_headlines(
+#                 q=category,
+#                 category='technology',
+#                 language='en',
+#                 country='us',
+#                 page_size=20
+#             )
+        
+#         parsed_articles = []
+#         for article in articles["articles"]:
+#             # Skip articles with missing essential fields
+#             if not article.get("title") or not article.get("url"):
+#                 continue
+                
+#             parsed_articles.append({
+#                 "source": article["source"]["name"] if article.get("source") and article["source"].get("name") else "Unknown Source",
+#                 "authors": article.get("author", "Unknown Author"),
+#                 "title": article.get("title", ""),
+#                 "summary": article.get("description", "No description available"),
+#                 "id": article.get("url", ""),
+#                 "url": article.get("url", ""),
+#                 "image": article.get("urlToImage", ""),
+#                 "date": article.get("publishedAt", ""),
+#                 "body": article.get("content", "No content available"),
+#                 "category": display_category
+#             })
+        
+#         logger.info(f"Retrieved {len(parsed_articles)} articles for category {category}")
+#         return parsed_articles
+#     except Exception as e:
+#         logger.error(f"Error retrieving articles for category {category}: {str(e)}")
+#         return []
+
+# @app.get("/api/articles/AI")
+# async def getArticlesAI():
+#     return await getArticlesByCat("ai OR artificial intelligence")
+
+# @app.get("/api/articles/ML")
+# async def getArticlesML():
+#     return await getArticlesByCat("machine learning")
+
+# @app.get("/api/articles/IoT")
+# async def getArticlesIOT():
+#     return await getArticlesByCat("internet of things")
+
+# @app.get("/api/articles/Blockchain")
+# async def getArticlesBlockchain():
+#     return await getArticlesByCat("blockchain OR crypto")
+
+# @app.get("/api/articles/Quantum Computing")
+# async def getArticlesQuantumComputing():
+#     return await getArticlesByCat("ibm")
+
+# @app.get("/api/articles/VR/AR")
+# async def getArticlesVirtualReality():
+#     return await getArticlesByCat("virtual reality")
+
+# @app.get("/api/articles/Networking")
+# async def getArticlesCybersecurity():
+#     return await getArticlesByCat("network OR cybersecurity")
+
+# @app.get("/api/articles/Robotics")
+# async def getArticlesRobotics():
+#     return await getArticlesByCat("robots OR robotics")
+
+# # Add a trending tech endpoint
+# @app.get("/api/articles/trending")
+# async def getTrendingTech():
+#     try:
+#         articles = newsapi.get_top_headlines(
+#             category='technology',
+#             language='en',
+#             country='us',
+#             page_size=20
+#         )
+        
+#         parsed_articles = []
+#         for article in articles["articles"]:
+#             if not article.get("title") or not article.get("url"):
+#                 continue
+                
+#             parsed_articles.append({
+#                 "source": article["source"]["name"] if article.get("source") and article["source"].get("name") else "Unknown Source",
+#                 "authors": article.get("author", "Unknown Author"),
+#                 "title": article.get("title", ""),
+#                 "summary": article.get("description", "No description available"),
+#                 "id": article.get("url", ""),
+#                 "url": article.get("url", ""),
+#                 "image": article.get("urlToImage", ""),
+#                 "date": article.get("publishedAt", ""),
+#                 "body": article.get("content", "No content available"),
+#                 "category": "Trending"
+#             })
+            
+#         logger.info(f"Retrieved {len(parsed_articles)} trending articles")
+#         return parsed_articles
+#     except Exception as e:
+#         logger.error(f"Error retrieving trending articles: {str(e)}")
+#         return []
+
+# if __name__ == "__main__":
+#     import uvicorn
+#     uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
 
 
 
-# Response 
+# API Response 
 
 # {
 #   "uri": "8627860201",

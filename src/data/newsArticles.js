@@ -4,7 +4,7 @@ const API_URL = 'http://localhost:8000'; // Your FastAPI backend URL
 
 const fetchArticles = async () => {
     try {
-        const response = await axios.get(`${API_URL}/api/articles`);
+        const response = await axios.get(`${API_URL}/api/articles/trending`);
         return response.data;
     } catch (error) {
         console.error('Error fetching articles:', error);
