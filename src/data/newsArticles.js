@@ -1,7 +1,7 @@
 import axios from 'axios';
 import supabase from '../lib/supabase';
 
-const API_URL = 'http://localhost:8000';
+const API_URL = 'https://tiger-digest-b93684787402.herokuapp.com';
 
 async function upsertToArticleTable(articles) {
     try {
@@ -16,10 +16,10 @@ async function upsertToArticleTable(articles) {
         });
 
         const results = await Promise.all(upsertPromises);
-        console.log('Articles upserted successfully:', results);
+
         return results;
     } catch (error) {
-        console.error('Error upserting articles:', error);
+
         return [];
     }
 }
