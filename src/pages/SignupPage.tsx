@@ -73,7 +73,12 @@ const SignupPage = () => {
     setLoading(true);
 
     try {
-      const success = await signup(name, email, password);
+      const success = await signup(
+        name,
+        email,
+        password,
+        window.location.origin + "/"
+      );
 
       if (success) {
         navigate("/confirm-email");
