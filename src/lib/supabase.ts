@@ -8,6 +8,7 @@ const supabaseKey =
 // Create the Supabase client
 const supabase = createClient(supabaseUrl, supabaseKey, {
   auth: {
+    storage: typeof window !== "undefined" ? localStorage : undefined,
     autoRefreshToken: true,
     persistSession: true,
     detectSessionInUrl: true,

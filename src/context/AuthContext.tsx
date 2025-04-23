@@ -1,7 +1,12 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from "react";
 import { toast } from "@/components/ui/sonner";
-import supabase from '@/lib/supabase';
-import { User } from '@supabase/supabase-js';
+import supabase from "@/lib/supabase";
 
 interface AuthUser {
   id: string;
@@ -22,7 +27,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
@@ -37,18 +42,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser({
           id: session.user.id,
           email: session.user.email!,
-          name: session.user.user_metadata.name || '',
+          name: session.user.user_metadata.name || "",
         });
       }
     });
 
     // Listen for changes on auth state
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         setUser({
           id: session.user.id,
           email: session.user.email!,
-          name: session.user.user_metadata.name || '',
+          name: session.user.user_metadata.name || "",
         });
       } else {
         setUser(null);
@@ -77,7 +84,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       return false;
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       toast.error("Login failed. Please try again.");
       return false;
     }
@@ -92,6 +99,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           data: {
             name,
           },
+          emailRedirectTo: `${window.location.origin}/confirm-email`,
         },
       });
 
@@ -101,13 +109,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
 
       if (data.user) {
-        toast.success("Account created successfully! Please check your email for verification.");
+        toast.success(
+          "Account created successfully! Please check your email for verification."
+        );
+        const { data: profileData, error: profileError } = await supabase
+          .from("profiles")
+          .insert({
+            id: data.user.id,
+            email: email,
+            full_name: name,
+          });
+
+        if (profileError) {
+          toast.error(error.message);
+          return false;
+        }
+
         return true;
       }
 
       return false;
     } catch (error) {
-      console.error('Signup error:', error);
+      console.error("Signup error:", error);
       toast.error("Signup failed. Please try again.");
       return false;
     }
@@ -123,7 +146,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         toast.success("Logged out successfully!");
       }
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error("Logout error:", error);
       toast.error("Logout failed. Please try again.");
     }
   };
