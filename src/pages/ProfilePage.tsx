@@ -86,9 +86,10 @@ const ProfilePage = () => {
       }
 
       if (email !== user.email) {
-        const { data, error } = await supabase.auth.updateUser({
-          email: email,
-        });
+        const { error } = await supabase
+          .from("profiles")
+          .update({ email: email })
+          .eq("id", user.id);
 
         if (error) throw error;
         toast.success("Email updated successfully!");
