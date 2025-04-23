@@ -1,11 +1,38 @@
 import axios from 'axios';
+import supabase from '../lib/supabase';
 
-const API_URL = 'http://localhost:8000'; // Your FastAPI backend URL
+const API_URL = 'http://localhost:8000';
 
-const fetchArticles = async () => {
+
+async function upsertToArticleTable(articles) {
+    try {
+        const upsertPromises = articles.map(async (article) => {
+            const { data, error } = await supabase
+                .from('articles')
+                .upsert(article)
+                .select();
+
+            if (error) throw new Error(error.message);
+            return data[0];
+        });
+
+        const results = await Promise.all(upsertPromises);
+        console.log('Articles upserted successfully:', results);
+        return results;
+    } catch (error) {
+        console.error('Error upserting articles:', error);
+        return [];
+    }
+}
+
+export const fetchArticles = async () => {
     try {
         const response = await axios.get(`${API_URL}/api/articles/trending`);
-        return response.data;
+        if (response.status === 200) {
+            return await upsertToArticleTable(response.data);
+        }
+        console.error('Error fetching articles:', response.status);
+        return [];
     } catch (error) {
         console.error('Error fetching articles:', error);
         return [];
@@ -15,12 +42,24 @@ const fetchArticles = async () => {
 export const fetchArticlesByCat = async (category) => {
     try {
         const response = await axios.get(`${API_URL}/api/articles/${category}`);
-        return response.data;
+        if (response.status === 200) {
+            return await upsertToArticleTable(response.data);
+        }
+        console.error('Error fetching articles:', response.status);
+        return [];
     } catch (error) {
         console.error('Error fetching articles:', error);
         return [];
     }
+};
 
-}
+let cachedArticles = [];
 
-export const articles = await fetchArticles();
+export const initializeArticles = async () => {
+    cachedArticles = await fetchArticles();
+    return cachedArticles;
+};
+
+export const articles = await initializeArticles();
+
+

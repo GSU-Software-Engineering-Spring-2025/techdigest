@@ -147,7 +147,7 @@ def parse_articles(articles_list):
             "image": image,
             "date": article.get("dateTime", article.get("date", "")),
             "body": article.get("body", "No content available"),
-            "category": ", ".join(category_names) if category_names else "Tech"
+            "category": ", ".join(category_names) if category_names else "Tech" 
         })
     
     return parsed_articles
