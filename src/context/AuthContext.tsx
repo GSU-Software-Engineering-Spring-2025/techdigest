@@ -99,7 +99,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           data: {
             name,
           },
-          emailRedirectTo: `${window.location.origin}/confirm-email`,
         },
       });
 
