@@ -8,6 +8,7 @@ import { Eye, ThumbsUp, ThumbsDown, MessageSquare } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/sonner";
+import { updateArticle } from "@/data/articles";
 
 const ArticlePage = () => {
   const { articleId } = useParams<{ articleId: string }>();
@@ -42,7 +43,7 @@ const ArticlePage = () => {
         setIsLoading(true);
 
         // First try the standard method
-        let foundArticle = getArticleById(articleId);
+        let foundArticle = await getArticleById(articleId);
 
         // If not found, we need to find which category it belongs to and fetch it
         if (!foundArticle) {
@@ -88,21 +89,21 @@ const ArticlePage = () => {
   useEffect(() => {
     if (article) {
       document.title = `${article.title} - TechDigest`;
-      // Increment views for demo purposes
       setViews((prev) => prev + 1);
+      updateArticle("views", views + 1, articleId);
     }
   }, [article]);
 
   const handleLike = () => {
     setLikes((prev) => prev + 1);
+    updateArticle("likes", likes + 1, articleId);
     toast.success("Article liked!");
-    // TODO: Send like to API
   };
 
   const handleDislike = () => {
     setDislikes((prev) => prev + 1);
     toast.error("Article disliked!");
-    // TODO: Send dislike to API
+    updateArticle("dislikes", dislikes + 1, articleId);
   };
 
   const handleShowSummary = () => {
