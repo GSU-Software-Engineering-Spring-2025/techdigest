@@ -13,10 +13,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { format } from "date-fns";
 import { toast } from "@/components/ui/sonner";
 import { summarizeText } from "@/services/openai";
+import { useAuth } from "@/context/AuthContext"; // Import the useAuth hook
 
 const ArticlePage = () => {
   const { articleId } = useParams<{ articleId: string }>();
   const location = useLocation();
+  const { user, isAuthenticated } = useAuth(); // Get authentication state
 
   const passedArticle = location.state?.articleData;
 
@@ -82,7 +84,8 @@ const ArticlePage = () => {
     };
 
     fetchArticle();
-    if (articleId) {
+    if (articleId && isAuthenticated) {
+      // Only check liked status if authenticated
       const likedArticles = JSON.parse(
         localStorage.getItem("likedArticles") || "{}"
       );
@@ -93,7 +96,7 @@ const ArticlePage = () => {
       setHasLiked(!!likedArticles[articleId]);
       setHasDisliked(!!dislikedArticles[articleId]);
     }
-  }, [articleId, passedArticle]);
+  }, [articleId, passedArticle, isAuthenticated]); // Add isAuthenticated to dependencies
 
   useEffect(() => {
     const updateViewCount = async () => {
@@ -125,6 +128,12 @@ const ArticlePage = () => {
 
   const handleLike = useCallback(async () => {
     if (!articleId) return;
+
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast.error("Please log in to like articles");
+      return;
+    }
 
     if (hasLiked) {
       toast.warning("You've already liked this article!");
@@ -161,10 +170,16 @@ const ArticlePage = () => {
     localStorage.setItem("likedArticles", JSON.stringify(likedArticles));
 
     toast.success("Article liked!");
-  }, [articleId, hasLiked, hasDisliked, likes, dislikes]);
+  }, [articleId, hasLiked, hasDisliked, likes, dislikes, isAuthenticated]); // Add isAuthenticated dependency
 
   const handleDislike = useCallback(async () => {
     if (!articleId) return;
+
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      toast.error("Please log in to dislike articles");
+      return;
+    }
 
     if (hasDisliked) {
       toast.warning("You've already disliked this article!");
@@ -198,7 +213,7 @@ const ArticlePage = () => {
     localStorage.setItem("dislikedArticles", JSON.stringify(dislikedArticles));
 
     toast.error("Article disliked!");
-  }, [articleId, hasLiked, hasDisliked, likes, dislikes]);
+  }, [articleId, hasLiked, hasDisliked, likes, dislikes, isAuthenticated]); // Add isAuthenticated dependency
 
   const handleShowSummary = async () => {
     try {
@@ -345,7 +360,9 @@ const ArticlePage = () => {
           )}
 
           <div className="prose max-w-none mb-8">
-            <p className="mb-4 text-lg leading-relaxed">{article.summary}</p>
+            <p className="text-xl text-gray-700 leading-relaxed mb-8 font-serif">
+              {article.summary}
+            </p>
             {article.body.split("\n\n").map((paragraph, idx) => (
               <p key={idx} className="mb-4">
                 {paragraph}
@@ -361,6 +378,11 @@ const ArticlePage = () => {
                   hasLiked ? "bg-blue-100 text-blue-700" : "hover:bg-blue-50"
                 } transition`}
                 onClick={handleLike}
+                title={
+                  isAuthenticated
+                    ? "Like this article"
+                    : "Log in to like this article"
+                }
               >
                 <ThumbsUp
                   className={`h-5 w-5 mr-2 ${hasLiked ? "fill-current" : ""}`}
@@ -373,6 +395,11 @@ const ArticlePage = () => {
                   hasDisliked ? "bg-red-100 text-red-700" : "hover:bg-red-50"
                 } transition`}
                 onClick={handleDislike}
+                title={
+                  isAuthenticated
+                    ? "Dislike this article"
+                    : "Log in to dislike this article"
+                }
               >
                 <ThumbsDown
                   className={`h-5 w-5 mr-2 ${
@@ -385,42 +412,6 @@ const ArticlePage = () => {
                 <Eye className="h-5 w-5 mr-2" /> {views} Views
               </div>
             </div>
-
-            <Button
-              onClick={handleShowSummary}
-              className="px-4 py-2 rounded-md bg-gradient-to-r from-purple-600 to-blue-600 text-white hover:opacity-90 transition"
-              disabled={isSummarizing}
-            >
-              {isSummarizing ? (
-                <span className="flex items-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Generating...
-                </span>
-              ) : showSummary ? (
-                "Hide Summary"
-              ) : (
-                "Summarize with AI"
-              )}
-            </Button>
           </div>
         </div>
       </div>
