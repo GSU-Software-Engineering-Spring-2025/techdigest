@@ -36,11 +36,6 @@ const App = () => (
             <Route path="/login" element={<LoginPage />} />
             <Route path="/signup" element={<SignupPage />} />
             <Route path="*" element={<NotFoundPage />} />
-            <Route path="/confirm-email" element={<ConfirmEmailPage />}></Route>
-            <Route
-              path="/confirm-new-email"
-              element={<ConfirmNewEmailPage />}
-            ></Route>
           </Routes>
         </BrowserRouter>
       </TooltipProvider>

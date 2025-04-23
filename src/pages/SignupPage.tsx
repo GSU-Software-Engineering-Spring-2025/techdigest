@@ -8,7 +8,6 @@ import { Eye, EyeOff, Mail, Lock, User } from "lucide-react";
 import { toast } from "@/components/ui/sonner";
 
 const SignupPage = () => {
-  const navigate = useNavigate();
   const { signup } = useAuth();
 
   const [name, setName] = useState("");
@@ -73,16 +72,8 @@ const SignupPage = () => {
     setLoading(true);
 
     try {
-      const success = await signup(
-        name,
-        email,
-        password,
-        window.location.origin + "/"
-      );
-
-      if (success) {
-        navigate("/confirm-email");
-      }
+      const { data: success, error } = await signup(name, email, password);
+      if (error) throw error;
     } catch (error) {
       console.error("Signup error:", error);
       toast.error("An unexpected error occurred. Please try again.");
