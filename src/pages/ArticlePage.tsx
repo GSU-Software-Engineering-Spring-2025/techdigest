@@ -38,7 +38,7 @@ const ArticlePage = () => {
     e: React.SyntheticEvent<HTMLImageElement, Event>
   ) => {
     const target = e.target as HTMLImageElement;
-    target.src = "/src/components/ui/placeholder.png";
+    target.src = "/placeholder.png";
     target.onerror = null;
   };
 
