@@ -1,7 +1,7 @@
 import axios from 'axios';
 import supabase from '../lib/supabase';
 
-const API_URL = 'https://tiger-digest-40937983b1dd.herokuapp.com';
+const API_URL = 'https://tiger-digest-b93684787402.herokuapp.com';
 
 async function upsertToArticleTable(articles) {
     try {
